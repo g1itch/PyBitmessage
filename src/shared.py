@@ -7,8 +7,8 @@ import stat
 import threading
 import hashlib
 import subprocess
-from binascii import hexlify
-from pyelliptic import arithmetic
+from binascii import hexlify, unhexlify
+from pyelliptic import arithmetic, Cipher
 
 # Project imports.
 import state
@@ -18,6 +18,10 @@ from debug import logger
 from addresses import decodeAddress, encodeVarint
 from helper_sql import sqlQuery
 
+try:
+    from plugins.plugin import get_plugin
+except ImportError:
+    get_plugin = False
 
 verbose = 1
 # This is obsolete with the change to protocol v3
@@ -114,6 +118,83 @@ def decodeWalletImportFormat(WIFstring):
     os._exit(0)
 
 
+class Keystore(object):
+    """Class implementing common key storage workflow"""
+    def __init__(self):
+        self.config = BMConfigParser()
+        keysencrypted = self.config.safeGetBoolean(
+            'bitmessagesettings', 'keysencrypted')
+
+        def noop(key):
+            return key
+
+        self.fetch = self._get_key
+        self.push = self._set_keys
+        self.encrypt = self.decrypt = noop
+
+        try:
+            content, plugin = self.config.safeGet(
+                'bitmessagesettings', 'keystore').split(':')
+            plugin = get_plugin('keystore', name=plugin)(self)
+        except (ValueError, TypeError):
+            plugin = None
+
+        if not plugin:
+            if keysencrypted:
+                logger.warning(
+                    'Key encryption plugin not found or unimplemented!')
+            return
+
+        try:
+            if content == 'password' and keysencrypted:
+                self.decrypt = plugin.decrypt
+                self.encrypt = plugin.encrypt
+            elif content == 'keys':
+                self.fetch = plugin.fetch
+                self.push = plugin.push
+        except AttributeError:
+            pass
+
+    def fetch_key(self, address, key_type='privencryptionkey'):
+        """Fetch address key of type key_type from keystore"""
+        try:
+            return hexlify(decodeWalletImportFormat(
+                self.decrypt(self.fetch(address, key_type))
+            ))
+        except TypeError:
+            pass  # handle in reloadMyAddressHashes etc
+
+    def push_keys(self, address, keys):
+        """Push the address keys in WIF into keystore"""
+        self.push(address, [self.encrypt(key) for key in keys])
+
+    def _get_key(self, address, key_type='privencryptionkey'):
+        return self.config.get(address, key_type)
+
+    def _set_keys(self, address, keys):
+        for key, key_type in zip(
+                keys, ('privencryptionkey', 'privsigningkey')):
+            self.config.set(address, key_type, key)
+        self.config.save()
+
+    # simmetric encryption from pyelliptic example:
+    # https://github.com/yann2192/pyelliptic
+    def _encrypt_AES_CFB(self, data, password):
+        nonce = Cipher.gen_IV('aes-256-cfb')
+        ctx = Cipher(password, nonce, 1, ciphername='aes-256-cfb')
+        encrypted = ctx.update(data)
+        encrypted += ctx.final()
+        return ':'.join(hexlify(i) for i in (encrypted, nonce))
+
+    def _decrypt_AES_CFB(self, data, password):
+        encrypted, nonce = [unhexlify(part) for part in data.split(':')]
+        ctx = Cipher(password, nonce, 0, ciphername='aes-256-cfb')
+        return ctx.ciphering(encrypted)
+
+
+keystore = Keystore()
+
+
 def reloadMyAddressHashes():
     logger.debug('reloading keys from keys.dat file')
     myECCryptorObjects.clear()
@@ -133,9 +214,7 @@ def reloadMyAddressHashes():
             if addressVersionNumber in (2, 3, 4):
                 # Returns a simple 32 bytes of information encoded
                 # in 64 Hex characters, or null if there was an error.
-                privEncryptionKey = hexlify(decodeWalletImportFormat(
-                    BMConfigParser().get(addressInKeysFile, 'privencryptionkey'))
-                )
+                privEncryptionKey = keystore.fetch_key(addressInKeysFile)
 
                 # It is 32 bytes encoded as 64 hex characters
                 if len(privEncryptionKey) == 64:

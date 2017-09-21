@@ -179,11 +179,10 @@ class addressGenerator(StoppableThread):
                     nonceTrialsPerByte))
                 BMConfigParser().set(address, 'payloadlengthextrabytes', str(
                     payloadLengthExtraBytes))
-                BMConfigParser().set(
-                    address, 'privsigningkey', privSigningKeyWIF)
-                BMConfigParser().set(
-                    address, 'privencryptionkey', privEncryptionKeyWIF)
                 BMConfigParser().save()
+
+                shared.keystore.push_keys(
+                    address, (privEncryptionKeyWIF, privSigningKeyWIF))
 
                 # The API and the join and create Chan functionality
                 # both need information back from the address generator.

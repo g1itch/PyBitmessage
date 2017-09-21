@@ -183,15 +183,10 @@ class singleWorker(StoppableThread):
         logger.info("Quitting...")
 
     def _getKeysForAddress(self, address):
-        privSigningKeyBase58 = BMConfigParser().get(
+        privSigningKeyHex = shared.keystore.fetch_key(
             address, 'privsigningkey')
-        privEncryptionKeyBase58 = BMConfigParser().get(
+        privEncryptionKeyHex = shared.keystore.fetch_key(
             address, 'privencryptionkey')
-
-        privSigningKeyHex = hexlify(shared.decodeWalletImportFormat(
-            privSigningKeyBase58))
-        privEncryptionKeyHex = hexlify(shared.decodeWalletImportFormat(
-            privEncryptionKeyBase58))
 
         # The \x04 on the beginning of the public keys are not sent.
         # This way there is only one acceptable way to encode
