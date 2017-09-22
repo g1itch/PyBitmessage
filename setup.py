@@ -148,9 +148,12 @@ if __name__ == "__main__":
                 'libmessaging ='
                 'pybitmessage.plugins.indicator_libmessaging [gir]'
             ],
+            'bitmessage.keystore': [
+                'gnomekeyring = pybitmessage.plugins.keystore_gnomekeyring'
+            ],
             'bitmessage.proxyconfig': [
                 'stem = pybitmessage.plugins.proxyconfig_stem [tor]'
-            ],
+            ]
             # 'console_scripts': [
             #        'pybitmessage = pybitmessage.bitmessagemain:main'
             # ]
