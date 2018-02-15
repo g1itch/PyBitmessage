@@ -1,4 +1,4 @@
-from PyQt4 import QtCore, QtGui
+from qtpy import QtGui
 
 import queues
 import re
@@ -9,18 +9,21 @@ from helper_ackPayload import genAckPayload
 from addresses import decodeAddress
 from bmconfigparser import BMConfigParser
 from foldertree import AccountMixin
-from pyelliptic.openssl import OpenSSL
 from utils import str_broadcast_subscribers
 import time
 
+
 def getSortedAccounts():
     configSections = BMConfigParser().addresses()
-    configSections.sort(cmp = 
-        lambda x,y: cmp(unicode(BMConfigParser().get(x, 'label'), 'utf-8').lower(), unicode(BMConfigParser().get(y, 'label'), 'utf-8').lower())
-        )
+    configSections.sort(
+        cmp=lambda x, y: cmp(
+            unicode(BMConfigParser().get(x, 'label'), 'utf-8').lower(),
+            unicode(BMConfigParser().get(y, 'label'), 'utf-8').lower())
+    )
     return configSections
 
-def getSortedSubscriptions(count = False):
+
+def getSortedSubscriptions(count=False):
     queryreturn = sqlQuery('SELECT label, address, enabled FROM subscriptions ORDER BY label COLLATE NOCASE ASC')
     ret = {}
     for row in queryreturn:
@@ -37,13 +40,14 @@ def getSortedSubscriptions(count = False):
             GROUP BY inbox.fromaddress, folder''', str_broadcast_subscribers)
         for row in queryreturn:
             address, folder, cnt = row
-            if not folder in ret[address]:
+            if folder not in ret[address]:
                 ret[address][folder] = {
                     'label': ret[address]['inbox']['label'],
                     'enabled': ret[address]['inbox']['enabled']
                 }
             ret[address][folder]['count'] = cnt
     return ret
+
 
 def accountClass(address):
     if not BMConfigParser().has_section(address):
@@ -60,8 +64,9 @@ def accountClass(address):
         return subscription
     try:
         gateway = BMConfigParser().get(address, "gateway")
-        for name, cls in inspect.getmembers(sys.modules[__name__], inspect.isclass):
-#            obj = g(address)
+        for name, cls in inspect.getmembers(
+                sys.modules[__name__], inspect.isclass):
+            # obj = g(address)
             if issubclass(cls, GatewayAccount) and cls.gatewayName == gateway:
                 return cls(address)
         # general gateway
@@ -70,9 +75,10 @@ def accountClass(address):
         pass
     # no gateway
     return BMAccount(address)
-    
+
+
 class AccountColor(AccountMixin):
-    def __init__(self, address, type = None):
+    def __init__(self, address, type=None):
         self.isEnabled = True
         self.address = address
         if type is None:
@@ -90,9 +96,9 @@ class AccountColor(AccountMixin):
         else:
             self.type = type
 
-    
+
 class BMAccount(object):
-    def __init__(self, address = None):
+    def __init__(self, address=None):
         self.address = address
         self.type = AccountMixin.NORMAL
         if BMConfigParser().has_section(address):
@@ -108,7 +114,7 @@ class BMAccount(object):
             if queryreturn:
                 self.type = AccountMixin.SUBSCRIPTION
 
-    def getLabel(self, address = None):
+    def getLabel(self, address=None):
         if address is None:
             address = self.address
         label = address
@@ -125,46 +131,44 @@ class BMAccount(object):
             if queryreturn != []:
                 for row in queryreturn:
                     label, = row
-        return label
-        
+        return unicode(label, 'utf-8')
+
     def parseMessage(self, toAddress, fromAddress, subject, message):
         self.toAddress = toAddress
         self.fromAddress = fromAddress
-        if isinstance(subject, unicode):
-            self.subject = str(subject)
-        else:
-            self.subject = subject
+        self.subject = subject
         self.message = message
         self.fromLabel = self.getLabel(fromAddress)
         self.toLabel = self.getLabel(toAddress)
 
 
 class NoAccount(BMAccount):
-    def __init__(self, address = None):
+    def __init__(self, address=None):
         self.address = address
         self.type = AccountMixin.NORMAL
 
-    def getLabel(self, address = None):
+    def getLabel(self, address=None):
         if address is None:
             address = self.address
         return address
 
-        
+
 class SubscriptionAccount(BMAccount):
     pass
-    
+
 
 class BroadcastAccount(BMAccount):
     pass
-        
-        
+
+
 class GatewayAccount(BMAccount):
     gatewayName = None
     ALL_OK = 0
     REGISTRATION_DENIED = 1
+
     def __init__(self, address):
         super(GatewayAccount, self).__init__(address)
-        
+
     def send(self):
         status, addressVersionNumber, streamNumber, ripe = decodeAddress(self.toAddress)
         stealthLevel = BMConfigParser().safeGetInt('bitmessagesettings', 'ackstealthlevel')
@@ -190,9 +194,7 @@ class GatewayAccount(BMAccount):
         )
 
         queues.workerQueue.put(('sendmessage', self.toAddress))
-    
-    def parseMessage(self, toAddress, fromAddress, subject, message):
-        super(GatewayAccount, self).parseMessage(toAddress, fromAddress, subject, message)
+
 
 class MailchuckAccount(GatewayAccount):
     # set "gateway" in keys.dat to this
@@ -202,23 +204,24 @@ class MailchuckAccount(GatewayAccount):
     relayAddress = "BM-2cWim8aZwUNqxzjMxstnUMtVEUQJeezstf"
     regExpIncoming = re.compile("(.*)MAILCHUCK-FROM::(\S+) \| (.*)")
     regExpOutgoing = re.compile("(\S+) (.*)")
+
     def __init__(self, address):
         super(MailchuckAccount, self).__init__(address)
         self.feedback = self.ALL_OK
-        
+
     def createMessage(self, toAddress, fromAddress, subject, message):
         self.subject = toAddress + " " + subject
         self.toAddress = self.relayAddress
         self.fromAddress = fromAddress
         self.message = message
-        
+
     def register(self, email):
         self.toAddress = self.registrationAddress
         self.subject = email
         self.message = ""
         self.fromAddress = self.address
         self.send()
-        
+
     def unregister(self):
         self.toAddress = self.unregistrationAddress
         self.subject = ""
@@ -255,7 +258,7 @@ class MailchuckAccount(GatewayAccount):
 #
 # attachments: no
 # Attachments will be ignored.
-# 
+#
 # archive: yes
 # Your incoming emails will be archived on the server. Use this if you need
 # help with debugging problems or you need a third party proof of emails. This
@@ -279,10 +282,12 @@ class MailchuckAccount(GatewayAccount):
         self.fromAddress = self.address
 
     def parseMessage(self, toAddress, fromAddress, subject, message):
-        super(MailchuckAccount, self).parseMessage(toAddress, fromAddress, subject, message)
+        super(MailchuckAccount, self).parseMessage(
+            toAddress, fromAddress, subject, message
+        )
         if fromAddress == self.relayAddress:
             matches = self.regExpIncoming.search(subject)
-            if not matches is None:
+            if matches is not None:
                 self.subject = ""
                 if not matches.group(1) is None:
                     self.subject += matches.group(1)
@@ -293,13 +298,14 @@ class MailchuckAccount(GatewayAccount):
                     self.fromAddress = matches.group(2)
         if toAddress == self.relayAddress:
             matches = self.regExpOutgoing.search(subject)
-            if not matches is None:
+            if matches is not None:
                 if not matches.group(2) is None:
                     self.subject = matches.group(2)
                 if not matches.group(1) is None:
                     self.toLabel = matches.group(1)
                     self.toAddress = matches.group(1)
         self.feedback = self.ALL_OK
-        if fromAddress == self.registrationAddress and self.subject == "Registration Request Denied":
+        if fromAddress == self.registrationAddress \
+                and self.subject == "Registration Request Denied":
             self.feedback = self.REGISTRATION_DENIED
         return self.feedback

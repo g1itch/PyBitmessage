@@ -193,45 +193,48 @@ def check_curses():
     logger.info('dialog Utility Version' + unicode(dialog_util_version))
     return True
 
+
 def check_pyqt():
     """Do pyqt dependency check.
 
     Here we are checking for PyQt4 with its version, as for it require
     PyQt 4.7 or later.
     """
-    try:
-        import PyQt4.QtCore
-    except ImportError:
-        logger.error('The PyQt4 package is not available. PyBitmessage requires PyQt 4.8 or later and Qt 4.7 or later.')
-        if sys.platform.startswith('openbsd'):
-            logger.error('On OpenBSD, try running "pkg_add py-qt4" as root.')
-        elif sys.platform.startswith('freebsd'):
-            logger.error('On FreeBSD, try running "pkg install py27-qt4" as root.')
-        elif os.path.isfile("/etc/os-release"):
-            with open("/etc/os-release", 'rt') as osRelease:
-                for line in osRelease:
-                    if line.startswith("NAME="):
-                        if "fedora" in line.lower():
-                            logger.error('On Fedora, try running "dnf install PyQt4" as root.')
-                        elif "opensuse" in line.lower():
-                            logger.error('On openSUSE, try running "zypper install python-qt" as root.')
-                        elif "ubuntu" in line.lower():
-                            logger.error('On Ubuntu, try running "apt-get install python-qt4" as root.')
-                        elif "debian" in line.lower():
-                            logger.error('On Debian, try running "apt-get install python-qt4" as root.')
-                        else:
-                            logger.error('If your package manager does not have this package, try running "pip install PyQt4".')
-        return False
-    logger.info('PyQt Version: ' + PyQt4.QtCore.PYQT_VERSION_STR)
-    logger.info('Qt Version: ' + PyQt4.QtCore.QT_VERSION_STR)
-    passed = True
-    if PyQt4.QtCore.PYQT_VERSION < 0x40800:
-        logger.error('This version of PyQt is too old. PyBitmessage requries PyQt 4.8 or later.')
-        passed = False
-    if PyQt4.QtCore.QT_VERSION < 0x40700:
-        logger.error('This version of Qt is too old. PyBitmessage requries Qt 4.7 or later.')
-        passed = False
-    return passed
+    return True
+    # try:
+    #     import PyQt4.QtCore
+    # except ImportError:
+    #     logger.error('The PyQt4 package is not available. PyBitmessage requires PyQt 4.8 or later and Qt 4.7 or later.')
+    #     if sys.platform.startswith('openbsd'):
+    #         logger.error('On OpenBSD, try running "pkg_add py-qt4" as root.')
+    #     elif sys.platform.startswith('freebsd'):
+    #         logger.error('On FreeBSD, try running "pkg install py27-qt4" as root.')
+    #     elif os.path.isfile("/etc/os-release"):
+    #         with open("/etc/os-release", 'rt') as osRelease:
+    #             for line in osRelease:
+    #                 if line.startswith("NAME="):
+    #                     if "fedora" in line.lower():
+    #                         logger.error('On Fedora, try running "dnf install PyQt4" as root.')
+    #                     elif "opensuse" in line.lower():
+    #                         logger.error('On openSUSE, try running "zypper install python-qt" as root.')
+    #                     elif "ubuntu" in line.lower():
+    #                         logger.error('On Ubuntu, try running "apt-get install python-qt4" as root.')
+    #                     elif "debian" in line.lower():
+    #                         logger.error('On Debian, try running "apt-get install python-qt4" as root.')
+    #                     else:
+    #                         logger.error('If your package manager does not have this package, try running "pip install PyQt4".')
+    #     return False
+    # logger.info('PyQt Version: ' + PyQt4.QtCore.PYQT_VERSION_STR)
+    # logger.info('Qt Version: ' + PyQt4.QtCore.QT_VERSION_STR)
+    # passed = True
+    # if PyQt4.QtCore.PYQT_VERSION < 0x40800:
+    #     logger.error('This version of PyQt is too old. PyBitmessage requries PyQt 4.8 or later.')
+    #     passed = False
+    # if PyQt4.QtCore.QT_VERSION < 0x40700:
+    #     logger.error('This version of Qt is too old. PyBitmessage requries Qt 4.7 or later.')
+    #     passed = False
+    # return passed
+
 
 def check_msgpack():
     """Do sgpack module check.

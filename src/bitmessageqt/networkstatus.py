@@ -1,4 +1,4 @@
-from PyQt4 import QtCore, QtGui
+from qtpy import QtCore, QtGui, QtWidgets
 import time
 import shared
 
@@ -14,36 +14,39 @@ import widgets
 from network.connectionpool import BMConnectionPool
 
 
-class NetworkStatus(QtGui.QWidget, RetranslateMixin):
+class NetworkStatus(QtWidgets.QWidget, RetranslateMixin):
     def __init__(self, parent=None):
         super(NetworkStatus, self).__init__(parent)
         widgets.load('networkstatus.ui', self)
 
         header = self.tableWidgetConnectionCount.horizontalHeader()
-        header.setResizeMode(QtGui.QHeaderView.ResizeToContents)
+        # header.setSectionResizeMode(0, QtWidgets.QHeaderView.Stretch)
+        for column in range(0, 4):
+            header.setSectionResizeMode(
+                column, QtWidgets.QHeaderView.ResizeToContents)
 
         # Somehow this value was 5 when I tested
         if header.sortIndicatorSection() > 4:
             header.setSortIndicator(0, QtCore.Qt.AscendingOrder)
 
         self.startup = time.localtime()
-        self.labelStartupTime.setText(_translate("networkstatus", "Since startup on %1").arg(
-            l10n.formatTimestamp(self.startup)))
-        
+        self.labelStartupTime.setText(
+            _translate("networkstatus", "Since startup on {0}").format(
+                l10n.formatTimestamp(self.startup))
+        )
+
         self.UISignalThread = UISignaler.get()
-        QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
-            "updateNumberOfMessagesProcessed()"), self.updateNumberOfMessagesProcessed)
-        QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
-            "updateNumberOfPubkeysProcessed()"), self.updateNumberOfPubkeysProcessed)
-        QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
-            "updateNumberOfBroadcastsProcessed()"), self.updateNumberOfBroadcastsProcessed)
-        QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
-            "updateNetworkStatusTab(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), self.updateNetworkStatusTab)
+        self.UISignalThread.updateNumberOfMessagesProcessed.connect(
+            self.updateNumberOfMessagesProcessed)
+        self.UISignalThread.updateNumberOfPubkeysProcessed.connect(
+            self.updateNumberOfPubkeysProcessed)
+        self.UISignalThread.updateNumberOfBroadcastsProcessed.connect(
+            self.updateNumberOfBroadcastsProcessed)
+        self.UISignalThread.updateNetworkStatusTab.connect(
+            self.updateNetworkStatusTab)
 
         self.timer = QtCore.QTimer()
-
-        QtCore.QObject.connect(
-            self.timer, QtCore.SIGNAL("timeout()"), self.runEveryTwoSeconds)
+        self.timer.timeout.connect(self.runEveryTwoSeconds)
 
     def startUpdate(self):
         Inventory().numberOfInventoryLookupsPerformed = 0
@@ -54,7 +57,10 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
         self.timer.stop()
 
     def formatBytes(self, num):
-        for x in [_translate("networkstatus", "byte(s)", None, QtCore.QCoreApplication.CodecForTr, num), "kB", "MB", "GB"]:
+        for x in [
+                _translate("networkstatus", "byte(s)", None, num),
+                "kB", "MB", "GB"
+        ]:
             if num < 1000.0:
                 return "%3.0f %s" % (num, x)
             num /= 1000.0
@@ -63,24 +69,31 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
     def formatByteRate(self, num):
         num /= 1000
         return "%4.0f kB" % num
-        
+
     def updateNumberOfObjectsToBeSynced(self):
-        self.labelSyncStatus.setText(_translate("networkstatus", "Object(s) to be synced: %n", None, QtCore.QCoreApplication.CodecForTr, network.stats.pendingDownload() + network.stats.pendingUpload()))
+        self.labelSyncStatus.setText(
+            _translate(
+                "networkstatus", "Object(s) to be synced: %n", None,
+                network.stats.pendingDownload() + network.stats.pendingUpload()
+        ))
 
     def updateNumberOfMessagesProcessed(self):
         self.updateNumberOfObjectsToBeSynced()
         self.labelMessageCount.setText(_translate(
-            "networkstatus", "Processed %n person-to-person message(s).", None, QtCore.QCoreApplication.CodecForTr, shared.numberOfMessagesProcessed))
+            "networkstatus", "Processed %n person-to-person message(s).",
+            None, shared.numberOfMessagesProcessed))
 
     def updateNumberOfBroadcastsProcessed(self):
         self.updateNumberOfObjectsToBeSynced()
         self.labelBroadcastCount.setText(_translate(
-            "networkstatus", "Processed %n broadcast message(s).", None, QtCore.QCoreApplication.CodecForTr, shared.numberOfBroadcastsProcessed))
+            "networkstatus", "Processed %n broadcast message(s).", None,
+            shared.numberOfBroadcastsProcessed))
 
     def updateNumberOfPubkeysProcessed(self):
         self.updateNumberOfObjectsToBeSynced()
         self.labelPubkeyCount.setText(_translate(
-            "networkstatus", "Processed %n public key(s).", None, QtCore.QCoreApplication.CodecForTr, shared.numberOfPubkeysProcessed))
+            "networkstatus", "Processed %n public key(s).", None,
+            shared.numberOfPubkeysProcessed))
 
     def updateNumberOfBytes(self):
         """
@@ -88,9 +101,16 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
         sent and received by 2.
         """
         self.labelBytesRecvCount.setText(_translate(
-            "networkstatus", "Down: %1/s  Total: %2").arg(self.formatByteRate(network.stats.downloadSpeed()), self.formatBytes(network.stats.receivedBytes())))
+            "networkstatus", "Down: {0}/s  Total: {1}"
+            ).format(
+                self.formatByteRate(network.stats.downloadSpeed()),
+                self.formatBytes(network.stats.receivedBytes())
+        ))
         self.labelBytesSentCount.setText(_translate(
-            "networkstatus", "Up: %1/s  Total: %2").arg(self.formatByteRate(network.stats.uploadSpeed()), self.formatBytes(network.stats.sentBytes())))
+            "networkstatus", "Up: {0}/s  Total: {1}").format(
+                self.formatByteRate(network.stats.uploadSpeed()),
+                self.formatBytes(network.stats.sentBytes())
+        ))
 
     def updateNetworkStatusTab(self, outbound, add, destination):
         if outbound:
@@ -114,16 +134,16 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
         if add:
             self.tableWidgetConnectionCount.insertRow(0)
             self.tableWidgetConnectionCount.setItem(0, 0,
-                QtGui.QTableWidgetItem("%s:%i" % (destination.host, destination.port))
+                QtWidgets.QTableWidgetItem("%s:%i" % (destination.host, destination.port))
                 )
             self.tableWidgetConnectionCount.setItem(0, 2,
-                QtGui.QTableWidgetItem("%s" % (c.userAgent))
+                QtWidgets.QTableWidgetItem("%s" % (c.userAgent))
                 )
             self.tableWidgetConnectionCount.setItem(0, 3,
-                QtGui.QTableWidgetItem("%s" % (c.tlsVersion))
+                QtWidgets.QTableWidgetItem("%s" % (c.tlsVersion))
                 )
             self.tableWidgetConnectionCount.setItem(0, 4,
-                QtGui.QTableWidgetItem("%s" % (",".join(map(str,c.streams))))
+                QtWidgets.QTableWidgetItem("%s" % (",".join(map(str,c.streams))))
                 )
             try:
                 # FIXME hard coded stream no
@@ -131,7 +151,7 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
             except KeyError:
                 rating = "-"
             self.tableWidgetConnectionCount.setItem(0, 1,
-                QtGui.QTableWidgetItem("%s" % (rating))
+                QtWidgets.QTableWidgetItem("%s" % (rating))
                 )
             if outbound:
                 brush = QtGui.QBrush(QtGui.QColor("yellow"), QtCore.Qt.SolidPattern)
@@ -143,15 +163,17 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
             self.tableWidgetConnectionCount.item(0, 1).setData(QtCore.Qt.UserRole, outbound)
         else:
             for i in range(self.tableWidgetConnectionCount.rowCount()):
-                if self.tableWidgetConnectionCount.item(i, 0).data(QtCore.Qt.UserRole).toPyObject() != destination:
+                if self.tableWidgetConnectionCount.item(i, 0).data(QtCore.Qt.UserRole) != destination:
                     continue
-                if self.tableWidgetConnectionCount.item(i, 1).data(QtCore.Qt.UserRole).toPyObject() == outbound:
+                if self.tableWidgetConnectionCount.item(i, 1).data(QtCore.Qt.UserRole) == outbound:
                     self.tableWidgetConnectionCount.removeRow(i)
                     break
         self.tableWidgetConnectionCount.setUpdatesEnabled(True)
         self.tableWidgetConnectionCount.setSortingEnabled(True)
         self.labelTotalConnections.setText(_translate(
-            "networkstatus", "Total Connections: %1").arg(str(self.tableWidgetConnectionCount.rowCount())))
+            "networkstatus", "Total Connections: {0}").format(
+                self.tableWidgetConnectionCount.rowCount()
+        ))
        # FYI: The 'singlelistener' thread sets the icon color to green when it receives an incoming connection, meaning that the user's firewall is configured correctly.
         if self.tableWidgetConnectionCount.rowCount() and shared.statusIconColor == 'red':
             self.window().setStatusIcon('yellow')
@@ -161,12 +183,16 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
     # timer driven
     def runEveryTwoSeconds(self):
         self.labelLookupsPerSecond.setText(_translate(
-            "networkstatus", "Inventory lookups per second: %1").arg(str(Inventory().numberOfInventoryLookupsPerformed/2)))
+            "networkstatus", "Inventory lookups per second: {0}").format(
+                Inventory().numberOfInventoryLookupsPerformed/2
+        ))
         Inventory().numberOfInventoryLookupsPerformed = 0
         self.updateNumberOfBytes()
         self.updateNumberOfObjectsToBeSynced()
 
     def retranslateUi(self):
         super(NetworkStatus, self).retranslateUi()
-        self.labelStartupTime.setText(_translate("networkstatus", "Since startup on %1").arg(
-            l10n.formatTimestamp(self.startup)))
+        self.labelStartupTime.setText(
+            _translate("networkstatus", "Since startup on {0}").format(
+                l10n.formatTimestamp(self.startup)
+            ))

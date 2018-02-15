@@ -1,17 +1,17 @@
 import ctypes
-from PyQt4 import QtCore, QtGui
 import ssl
 import sys
 import time
 
 import account
+from qtpy import QtCore
+from tr import _translate
 from bmconfigparser import BMConfigParser
-from debug import logger
 import defaults
 from foldertree import AccountMixin
-from helper_sql import *
+from helper_sql import sqlQuery, sqlExecute
 from l10n import getTranslationLanguage
-from openclpow import openclAvailable, openclEnabled
+from openclpow import openclEnabled
 import paths
 import proofofwork
 from pyelliptic.openssl import OpenSSL
@@ -53,27 +53,42 @@ UPnP: {}
 Connected hosts: {}
 '''
 
+
 def checkAddressBook(myapp):
-    sqlExecute('''DELETE from addressbook WHERE address=?''', OLD_SUPPORT_ADDRESS)
-    queryreturn = sqlQuery('''SELECT * FROM addressbook WHERE address=?''', SUPPORT_ADDRESS)
+    sqlExecute(
+        '''DELETE from addressbook WHERE address=?''', OLD_SUPPORT_ADDRESS)
+    queryreturn = sqlQuery(
+        '''SELECT * FROM addressbook WHERE address=?''', SUPPORT_ADDRESS)
     if queryreturn == []:
-        sqlExecute('''INSERT INTO addressbook VALUES (?,?)''', str(QtGui.QApplication.translate("Support", SUPPORT_LABEL)), SUPPORT_ADDRESS)
+        sqlExecute(
+            '''INSERT INTO addressbook VALUES (?,?)''',
+            str(_translate("Support", SUPPORT_LABEL)), SUPPORT_ADDRESS
+        )
         myapp.rerenderAddressBook()
+
 
 def checkHasNormalAddress():
     for address in account.getSortedAccounts():
         acct = account.accountClass(address)
-        if acct.type == AccountMixin.NORMAL and BMConfigParser().safeGetBoolean(address, 'enabled'):
+        if acct.type == AccountMixin.NORMAL \
+                and BMConfigParser().safeGetBoolean(address, 'enabled'):
             return address
     return False
 
+
 def createAddressIfNeeded(myapp):
     if not checkHasNormalAddress():
-        queues.addressGeneratorQueue.put(('createRandomAddress', 4, 1, str(QtGui.QApplication.translate("Support", SUPPORT_MY_LABEL)), 1, "", False, defaults.networkDefaultProofOfWorkNonceTrialsPerByte, defaults.networkDefaultPayloadLengthExtraBytes))
+        queues.addressGeneratorQueue.put((
+            'createRandomAddress', 4, 1,
+            str(_translate("Support", SUPPORT_MY_LABEL)), 1, "", False,
+            defaults.networkDefaultProofOfWorkNonceTrialsPerByte,
+            defaults.networkDefaultPayloadLengthExtraBytes
+        ))
     while state.shutdown == 0 and not checkHasNormalAddress():
         time.sleep(.2)
     myapp.rerenderComboBoxSendFrom()
     return checkHasNormalAddress()
+
 
 def createSupportMessage(myapp):
     checkAddressBook(myapp)
@@ -81,9 +96,13 @@ def createSupportMessage(myapp):
     if state.shutdown:
         return
 
-    myapp.ui.lineEditSubject.setText(str(QtGui.QApplication.translate("Support", SUPPORT_SUBJECT)))
-    addrIndex = myapp.ui.comboBoxSendFrom.findData(address, QtCore.Qt.UserRole, QtCore.Qt.MatchFixedString | QtCore.Qt.MatchCaseSensitive)
-    if addrIndex == -1: # something is very wrong
+    myapp.ui.lineEditSubject.setText(
+        str(_translate("Support", SUPPORT_SUBJECT)))
+    addrIndex = myapp.ui.comboBoxSendFrom.findData(
+        address, QtCore.Qt.UserRole,
+        QtCore.Qt.MatchFixedString | QtCore.Qt.MatchCaseSensitive
+    )
+    if addrIndex == -1:  # something is very wrong
         return
     myapp.ui.comboBoxSendFrom.setCurrentIndex(addrIndex)
     myapp.ui.lineEditTo.setText(SUPPORT_ADDRESS)
@@ -93,10 +112,8 @@ def createSupportMessage(myapp):
     if commit:
         version += " GIT " + commit
 
-    os = sys.platform
-    if os == "win32":
-        windowsversion = sys.getwindowsversion()
-        os = "Windows " + str(windowsversion[0]) + "." + str(windowsversion[1])
+    if sys.platform == "win32":
+        os = "Windows %s.%s" % sys.getwindowsversion()
     else:
         try:
             from os import uname
@@ -106,17 +123,18 @@ def createSupportMessage(myapp):
             pass
     architecture = "32" if ctypes.sizeof(ctypes.c_voidp) == 4 else "64"
     pythonversion = sys.version
-    
+
     opensslversion = "%s (Python internal), %s (external for PyElliptic)" % (ssl.OPENSSL_VERSION, OpenSSL._version)
 
     frozen = "N/A"
     if paths.frozen:
         frozen = paths.frozen
-    portablemode = "True" if state.appdata == paths.lookupExeFolder() else "False"
+    portablemode = "True" \
+        if state.appdata == paths.lookupExeFolder() else "False"
     cpow = "True" if proofofwork.bmpow else "False"
-    #cpow = QtGui.QApplication.translate("Support", cpow)
+    # cpow = QtGui.QApplication.translate("Support", cpow)
     openclpow = str(BMConfigParser().safeGet('bitmessagesettings', 'opencl')) if openclEnabled() else "None"
-    #openclpow = QtGui.QApplication.translate("Support", openclpow)
+    # openclpow = QtGui.QApplication.translate("Support", openclpow)
     locale = getTranslationLanguage()
     try:
         socks = BMConfigParser().get('bitmessagesettings', 'socksproxytype')
@@ -128,7 +146,12 @@ def createSupportMessage(myapp):
         upnp = "N/A"
     connectedhosts = len(network.stats.connectedHostsList())
 
-    myapp.ui.textEditMessage.setText(str(QtGui.QApplication.translate("Support", SUPPORT_MESSAGE)).format(version, os, architecture, pythonversion, opensslversion, frozen, portablemode, cpow, openclpow, locale, socks, upnp, connectedhosts))
+    myapp.ui.textEditMessage.setText(
+        str(_translate("Support", SUPPORT_MESSAGE)).format(
+            version, os, architecture, pythonversion, opensslversion,
+            frozen, portablemode, cpow, openclpow, locale, socks, upnp,
+            connectedhosts
+        ))
 
     # single msg tab
     myapp.ui.tabWidgetSend.setCurrentIndex(

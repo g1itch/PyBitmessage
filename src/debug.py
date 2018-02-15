@@ -24,27 +24,37 @@ import helper_startup
 import state
 helper_startup.loadConfig()
 
-# Now can be overriden from a config file, which uses standard python logging.config.fileConfig interface
-# examples are here: https://bitmessage.org/forum/index.php/topic,4820.msg11163.html#msg11163
+# Now can be overriden from a config file, which uses standard python
+# logging.config.fileConfig interface examples are here:
+# https://bitmessage.org/forum/index.php/topic,4820.msg11163.html#msg11163
 log_level = 'WARNING'
+
 
 def log_uncaught_exceptions(ex_cls, ex, tb):
     logging.critical('Unhandled exception', exc_info=(ex_cls, ex, tb))
+    # logging.critical(
+    #     'Unhandled exception of type %s: %s,\ntraceback: %s', ex_cls, ex, tb)
+
 
 def configureLogging():
     have_logging = False
+    config_path = os.path.join(state.appdata, 'logging.dat')
     try:
-        logging.config.fileConfig(os.path.join (state.appdata, 'logging.dat'))
+        logging.config.fileConfig(config_path)
         have_logging = True
-        print "Loaded logger configuration from %s" % (os.path.join(state.appdata, 'logging.dat'))
+        print "Loaded logger configuration from %s" % config_path
     except:
-        if os.path.isfile(os.path.join(state.appdata, 'logging.dat')):
-            print "Failed to load logger configuration from %s, using default logging config" % (os.path.join(state.appdata, 'logging.dat'))
+        if os.path.isfile(config_path):
+            print(
+                "Failed to load logger configuration from %s,"
+                " using default logging config" % config_path
+            )
             print sys.exc_info()
         else:
-            # no need to confuse the user if the logger config is missing entirely
+            # no need to confuse the user if the logger config
+            # is missing entirely
             print "Using default logger configuration"
-    
+
     sys.excepthook = log_uncaught_exceptions
 
     if have_logging:
@@ -69,7 +79,7 @@ def configureLogging():
                 'formatter': 'default',
                 'level': log_level,
                 'filename': state.appdata + 'debug.log',
-                'maxBytes': 2097152, # 2 MiB
+                'maxBytes': 2097152,  # 2 MiB
                 'backupCount': 1,
                 'encoding': 'UTF-8',
             }
@@ -77,15 +87,15 @@ def configureLogging():
         'loggers': {
             'console_only': {
                 'handlers': ['console'],
-                'propagate' : 0
+                'propagate': 0
             },
             'file_only': {
                 'handlers': ['file'],
-                'propagate' : 0
+                'propagate': 0
             },
             'both': {
                 'handlers': ['console', 'file'],
-                'propagate' : 0
+                'propagate': 0
             },
         },
         'root': {
@@ -95,8 +105,9 @@ def configureLogging():
     })
     return True
 
+
 # TODO (xj9): Get from a config file.
-#logger = logging.getLogger('console_only')
+# logger = logging.getLogger('console_only')
 if configureLogging():
     if '-c' in sys.argv:
         logger = logging.getLogger('file_only')
@@ -104,6 +115,7 @@ if configureLogging():
         logger = logging.getLogger('both')
 else:
     logger = logging.getLogger('default')
+
 
 def restartLoggingInUpdatedAppdataLocation():
     global logger
@@ -118,4 +130,3 @@ def restartLoggingInUpdatedAppdataLocation():
             logger = logging.getLogger('both')
     else:
         logger = logging.getLogger('default')
-

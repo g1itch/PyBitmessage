@@ -1,29 +1,19 @@
-#!/usr/bin/python2.7
+from helper_sql import sqlQuery
+from tr import _translate
 
-from helper_sql import *
 
-try:
-    from PyQt4 import QtCore, QtGui
-    haveQt = True
-except:
-    haveQt = False
-
-def search_translate (context, text):
-    if haveQt:
-        return QtGui.QApplication.translate(context, text)
-    else:
-        return text.lower()
-
-def search_sql(xAddress = "toaddress", account = None, folder = "inbox", where = None, what = None, unreadOnly = False):
+def search_sql(
+        xAddress="toaddress", account=None, folder="inbox", where=None,
+        what=None, unreadOnly=False):
     if what is not None and what != "":
         what = "%" + what + "%"
-        if where == search_translate("MainWindow", "To"):
+        if where == _translate("MainWindow", "To"):
             where = "toaddress"
-        elif where == search_translate("MainWindow", "From"):
+        elif where == _translate("MainWindow", "From"):
             where = "fromaddress"
-        elif where == search_translate("MainWindow", "Subject"):
+        elif where == _translate("MainWindow", "Subject"):
             where = "subject"
-        elif where == search_translate("MainWindow", "Message"):
+        elif where == _translate("MainWindow", "Message"):
             where = "message"
         else:
             where = "toaddress || fromaddress || subject || message"
@@ -68,18 +58,30 @@ def search_sql(xAddress = "toaddress", account = None, folder = "inbox", where =
         sqlStatementBase += " ORDER BY lastactiontime"
     return sqlQuery(sqlStatementBase, sqlArguments)
 
-def check_match(toAddress, fromAddress, subject, message, where = None, what = None):
+
+def check_match(
+        toAddress, fromAddress, subject, message, where=None, what=None):
     if what is not None and what != "":
-        if where in (search_translate("MainWindow", "To"), search_translate("MainWindow", "All")):
+        if where in (
+            _translate("MainWindow", "To"), _translate("MainWindow", "All")
+        ):
             if what.lower() not in toAddress.lower():
                 return False
-        elif where in (search_translate("MainWindow", "From"), search_translate("MainWindow", "All")):
+        elif where in (
+            _translate("MainWindow", "From"), _translate("MainWindow", "All")
+        ):
             if what.lower() not in fromAddress.lower():
                 return False
-        elif where in (search_translate("MainWindow", "Subject"), search_translate("MainWindow", "All")):
+        elif where in (
+            _translate("MainWindow", "Subject"),
+            _translate("MainWindow", "All")
+        ):
             if what.lower() not in subject.lower():
                 return False
-        elif where in (search_translate("MainWindow", "Message"), search_translate("MainWindow", "All")):
+        elif where in (
+            _translate("MainWindow", "Message"),
+            _translate("MainWindow", "All")
+        ):
             if what.lower() not in message.lower():
                 return False
     return True

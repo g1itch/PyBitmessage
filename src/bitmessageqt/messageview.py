@@ -1,17 +1,16 @@
-from PyQt4 import QtCore, QtGui
+from qtpy import QtCore, QtGui, QtWidgets
+from tr import _translate
 
-import multiprocessing
-import Queue
-from urlparse import urlparse
-from safehtmlparser import *
+from safehtmlparser import SafeHTMLParser
 
-class MessageView(QtGui.QTextBrowser):
+
+class MessageView(QtWidgets.QTextBrowser):
     MODE_PLAIN = 0
     MODE_HTML = 1
-    
-    def __init__(self, parent = 0):
+
+    def __init__(self, parent=None):
         super(MessageView, self).__init__(parent)
-        self.mode = MessageView.MODE_PLAIN 
+        self.mode = MessageView.MODE_PLAIN
         self.html = None
         self.setOpenExternalLinks(False)
         self.setOpenLinks(False)
@@ -27,10 +26,14 @@ class MessageView(QtGui.QTextBrowser):
     def resizeEvent(self, event):
         super(MessageView, self).resizeEvent(event)
         self.setWrappingWidth(event.size().width())
-    
+
     def mousePressEvent(self, event):
-        #text = textCursor.block().text()
-        if event.button() == QtCore.Qt.LeftButton and self.html and self.html.has_html and self.cursorForPosition(event.pos()).block().blockNumber() == 0:
+        # text = textCursor.block().text()
+        if (
+            event.button() == QtCore.Qt.LeftButton and self.html
+            and self.html.has_html
+            and self.cursorForPosition(event.pos()).block().blockNumber() == 0
+        ):
             if self.mode == MessageView.MODE_PLAIN:
                 self.showHTML()
             else:
@@ -41,19 +44,24 @@ class MessageView(QtGui.QTextBrowser):
     def wheelEvent(self, event):
         # super will actually automatically take care of zooming
         super(MessageView, self).wheelEvent(event)
-        if (QtGui.QApplication.queryKeyboardModifiers() & QtCore.Qt.ControlModifier) == QtCore.Qt.ControlModifier and event.orientation() == QtCore.Qt.Vertical:
+        if (
+                (QtWidgets.QApplication.queryKeyboardModifiers()
+                 & QtCore.Qt.ControlModifier) == QtCore.Qt.ControlModifier
+                and event.orientation() == QtCore.Qt.Vertical
+        ):
             zoom = self.currentFont().pointSize() * 100 / self.defaultFontPointSize
-            QtGui.QApplication.activeWindow().statusBar().showMessage(QtGui.QApplication.translate("MainWindow", "Zoom level %1%").arg(str(zoom)))
+            QtWidgets.QApplication.activeWindow().statusbar.showMessage(
+                _translate("MainWindow", "Zoom level {0}%").format(zoom))
 
     def setWrappingWidth(self, width=None):
-        self.setLineWrapMode(QtGui.QTextEdit.FixedPixelWidth)
+        self.setLineWrapMode(QtWidgets.QTextEdit.FixedPixelWidth)
         if width is None:
             width = self.width()
         self.setLineWrapColumnOrWidth(width)
 
     def confirmURL(self, link):
         if link.scheme() == "mailto":
-            window = QtGui.QApplication.activeWindow()
+            window = QtWidgets.QApplication.activeWindow()
             window.ui.lineEditTo.setText(link.path())
             if link.hasQueryItem("subject"):
                 window.ui.lineEditSubject.setText(
@@ -68,27 +76,24 @@ class MessageView(QtGui.QTextBrowser):
             )
             window.ui.textEditMessage.setFocus()
             return
-        reply = QtGui.QMessageBox.warning(self,
-            QtGui.QApplication.translate("MessageView", "Follow external link"),
-            QtGui.QApplication.translate("MessageView", "The link \"%1\" will open in a browser. It may be a security risk, it could de-anonymise you or download malicious data. Are you sure?").arg(unicode(link.toString())),
-            QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
-        if reply == QtGui.QMessageBox.Yes:
+        reply = QtWidgets.QMessageBox.warning(
+            self, _translate("MessageView", "Follow external link"),
+            _translate(
+                "MessageView",
+                "The link \"{0}\" will open in a browser. It may be"
+                " a security risk, it could de-anonymise you or download"
+                " malicious data. Are you sure?"
+            ).format(link.toString()),
+            QtWidgets.QMessageBox.Yes, QtWidgets.QMessageBox.No)
+        if reply == QtWidgets.QMessageBox.Yes:
             QtGui.QDesktopServices.openUrl(link)
 
-    def loadResource (self, restype, name):
-        if restype == QtGui.QTextDocument.ImageResource and name.scheme() == "bmmsg":
+    def loadResource(self, restype, name):
+        if restype == QtGui.QTextDocument.ImageResource \
+                and name.scheme() == "bmmsg":
             pass
-#            QImage correctImage;
-#            lookup the correct QImage from a cache
-#            return QVariant::fromValue(correctImage);
-#        elif restype == QtGui.QTextDocument.HtmlResource:
-#        elif restype == QtGui.QTextDocument.ImageResource:
-#        elif restype == QtGui.QTextDocument.StyleSheetResource:
-#        elif restype == QtGui.QTextDocument.UserResource:
         else:
             pass
-#            by default, this will interpret it as a local file
-#            QtGui.QTextBrowser.loadResource(restype, name)
 
     def lazyRender(self):
         if self.rendering:
@@ -96,7 +101,11 @@ class MessageView(QtGui.QTextBrowser):
         self.rendering = True
         position = self.verticalScrollBar().value()
         cursor = QtGui.QTextCursor(self.document())
-        while self.outpos < len(self.out) and self.verticalScrollBar().value() >= self.document().size().height() - 2 * self.size().height():
+        while (
+            self.outpos < len(self.out) and
+            self.verticalScrollBar().value() >=
+            self.document().size().height() - 2 * self.size().height()
+        ):
             startpos = self.outpos
             self.outpos += 10240
             # find next end of tag
@@ -104,16 +113,20 @@ class MessageView(QtGui.QTextBrowser):
                 pos = self.out.find(">", self.outpos)
                 if pos > self.outpos:
                     self.outpos = pos + 1
-            cursor.movePosition(QtGui.QTextCursor.End, QtGui.QTextCursor.MoveAnchor)
-            cursor.insertHtml(QtCore.QString(self.out[startpos:self.outpos]))
+            cursor.movePosition(
+                QtGui.QTextCursor.End, QtGui.QTextCursor.MoveAnchor)
+            cursor.insertHtml(self.out[startpos:self.outpos])
         self.verticalScrollBar().setValue(position)
         self.rendering = False
-    
+
     def showPlain(self):
         self.mode = MessageView.MODE_PLAIN
         out = self.html.raw
         if self.html.has_html:
-            out = "<div align=\"center\" style=\"text-decoration: underline;\"><b>" + unicode(QtGui.QApplication.translate("MessageView", "HTML detected, click here to display")) + "</b></div><br/>" + out
+            out = "<div align=\"center\" style=\"text-decoration: underline;\"><b>" \
+              + _translate(
+                "MessageView", "HTML detected, click here to display") \
+              + "</b></div><br/>" + out
         self.out = out
         self.outpos = 0
         self.setHtml("")
@@ -122,7 +135,10 @@ class MessageView(QtGui.QTextBrowser):
     def showHTML(self):
         self.mode = MessageView.MODE_HTML
         out = self.html.sanitised
-        out = "<div align=\"center\" style=\"text-decoration: underline;\"><b>" + unicode(QtGui.QApplication.translate("MessageView", "Click here to disable HTML")) + "</b></div><br/>" + out
+        out = \
+            "<div align=\"center\" style=\"text-decoration: underline;\"><b>" \
+            + _translate("MessageView", "Click here to disable HTML") \
+            + "</b></div><br/>" + out
         self.out = out
         self.outpos = 0
         self.setHtml("")
@@ -130,8 +146,6 @@ class MessageView(QtGui.QTextBrowser):
 
     def setContent(self, data):
         self.html = SafeHTMLParser()
-        self.html.reset()
-        self.html.reset_safe()
         self.html.allow_picture = True
         self.html.feed(data)
         self.html.close()

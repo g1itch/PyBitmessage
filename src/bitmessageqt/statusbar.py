@@ -1,8 +1,8 @@
-from PyQt4 import QtCore, QtGui
-from Queue import Queue
+from qtpy import QtWidgets
 from time import time
 
-class BMStatusBar(QtGui.QStatusBar):
+
+class BMStatusBar(QtWidgets.QStatusBar):
     duration = 10000
     deleteAfter = 60
 
