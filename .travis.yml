@@ -6,7 +6,7 @@ addons:
     packages:
       - build-essential
       - libcap-dev
-      - python-qt4
+      - python-pyqt5
       - tor
       - xvfb
 install:

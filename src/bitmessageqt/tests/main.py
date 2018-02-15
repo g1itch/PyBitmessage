@@ -2,7 +2,7 @@
 
 import unittest
 
-from PyQt4 import QtCore, QtGui
+from qtpy import QtWidgets
 
 import bitmessageqt
 from tr import _translate
@@ -12,7 +12,7 @@ class TestBase(unittest.TestCase):
     """Base class for bitmessageqt test case"""
 
     def setUp(self):
-        self.app = QtGui.QApplication([])
+        self.app = QtWidgets.QApplication([])
         self.window = bitmessageqt.MyForm()
 
     def tearDown(self):
@@ -26,5 +26,5 @@ class TestMain(unittest.TestCase):
         """Check the results of _translate() with various args"""
         self.assertIsInstance(
             _translate("MainWindow", "Test"),
-            QtCore.QString
+            unicode
         )
