@@ -10,7 +10,7 @@ from utils import str_chan
 from debug import logger
 
 
-class AddressPassPhraseValidatorMixin():
+class AddressPassPhraseValidatorMixin(object):
     def setParams(
         self, passPhraseObject=None, addressObject=None,
         feedBackObject=None, buttonBox=None, addressMandatory=True
