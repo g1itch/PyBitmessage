@@ -1,22 +1,32 @@
+"""
+Slim layer providing environment agnostic _translate()
+"""
+
 import state
 
 
-def _translate(context, text, disambiguation=None, n=None):
-    return translateText(context, text, n)
+def _tr_dummy(context, text, disambiguation=None, n=None):
+    # pylint: disable=unused-argument
+    return text
 
 
-def translateText(context, text, n=None):
-    """Translate text in context"""
+if state.enableGUI and not state.curses:
     try:
-        enableGUI = state.enableGUI
-    except AttributeError:  # inside the plugin
-        enableGUI = True
-    if enableGUI:
-        from qtpy import QtWidgets, QtCore
-        if n is None:
-            return QtWidgets.QApplication.translate(context, text)
-        else:
-            return QtWidgets.QApplication.translate(
-                context, text, None, QtCore.QCoreApplication.CodecForTr, n)
+        from qtpy import QtWidgets, QtCore, API
+    except ImportError:
+        _translate = _tr_dummy
     else:
-        return text
+        if API == 'pyqt5':
+            _translate = QtWidgets.QApplication.translate
+        else:
+            def _translate(context, text, disambiguation=None, n=None):
+                return (
+                    QtWidgets.QApplication.translate(
+                        context, text, disambiguation)
+                    if n is None else
+                    QtWidgets.QApplication.translate(
+                        context, text, disambiguation,
+                        QtCore.QCoreApplication.CodecForTr, n)
+                )
+else:
+    _translate = _tr_dummy
