@@ -1,21 +1,23 @@
+import os
 import shared
 
-
-def _translate(context, text, disambiguation=None, n=None):
-    return translateText(context, text, n)
-
-
-def translateText(context, text, n=None):
-    try:
-        is_daemon = shared.thisapp.daemon
-    except AttributeError:  # inside the plugin
-        is_daemon = False
-    if not is_daemon:
-        from qtpy import QtWidgets, QtCore
-        if n is None:
-            return QtWidgets.QApplication.translate(context, text)
-        else:
-            return QtWidgets.QApplication.translate(
-                context, text, None, QtCore.QCoreApplication.CodecForTr, n)
-    else:
+try:
+    _daemon = shared.thisapp.daemon
+except AttributeError:  # inside the plugin
+    _daemon = False
+if _daemon:
+    def _translate(context, text, disambiguation=None, n=None):
         return text
+else:
+    from qtpy import QtWidgets, QtCore
+    if os.environ['QT_API'] == 'pyqt5':
+        _translate = QtWidgets.QApplication.translate
+    else:
+        def _translate(context, text, disambiguation=None, n=None):
+            return (
+                QtWidgets.QApplication.translate(context, text, disambiguation)
+                if n is None else
+                QtWidgets.QApplication.translate(
+                    context, text, disambiguation,
+                    QtCore.QCoreApplication.CodecForTr, n)
+            )
