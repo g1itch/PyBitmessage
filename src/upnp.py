@@ -3,7 +3,7 @@
 import httplib
 from random import randint
 import socket
-from struct import unpack, pack
+from struct import unpack
 import threading
 import time
 from bmconfigparser import BMConfigParser
@@ -13,6 +13,7 @@ import queues
 import shared
 import state
 import tr
+
 
 def createRequestXML(service, action, arguments=None):
     from xml.dom.minidom import Document
@@ -230,7 +231,12 @@ class uPnPThread(threading.Thread, StoppableThread):
                         logger.debug("Found UPnP router at %s", ip)
                         self.routers.append(newRouter)
                         self.createPortMapping(newRouter)
-                        queues.UISignalQueue.put(('updateStatusBar', tr._translate("MainWindow",'UPnP port mapping established on port %1').arg(str(self.extPort))))
+                        queues.UISignalQueue.put((
+                            'updateStatusBar', tr._translate(
+                                "MainWindow",
+                                "UPnP port mapping established on port {0}"
+                            ).format(self.extPort)
+                        ))
                         # retry connections so that the submitted port is refreshed
                         with shared.alreadyAttemptedConnectionsListLock:
                             shared.alreadyAttemptedConnectionsList.clear()

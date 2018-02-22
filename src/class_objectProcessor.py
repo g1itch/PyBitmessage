@@ -3,19 +3,16 @@ import threading
 import shared
 import hashlib
 import random
-from struct import unpack, pack
-import sys
+from struct import unpack
 import string
-from subprocess import call  # used when the API must execute an outside program
+# used when the API must execute an outside program
+from subprocess import call
 import traceback
 from binascii import hexlify
 
-from pyelliptic.openssl import OpenSSL
 import highlevelcrypto
 from addresses import *
 from bmconfigparser import BMConfigParser
-import helper_generic
-from helper_generic import addDataPadding
 import helper_bitcoin
 import helper_inbox
 import helper_msgcoding
@@ -28,6 +25,7 @@ import state
 import tr
 from debug import logger
 import l10n
+
 
 class objectProcessor(threading.Thread):
     """
@@ -105,15 +103,20 @@ class objectProcessor(threading.Thread):
         if data[readPosition:] in shared.ackdataForWhichImWatching:
             logger.info('This object is an acknowledgement bound for me.')
             del shared.ackdataForWhichImWatching[data[readPosition:]]
-            sqlExecute('UPDATE sent SET status=?, lastactiontime=? WHERE ackdata=?',
-                       'ackreceived',
-                       int(time.time()), 
-                       data[readPosition:])
-            queues.UISignalQueue.put(('updateSentItemStatusByAckdata', (data[readPosition:], tr._translate("MainWindow",'Acknowledgement of the message received %1').arg(l10n.formatTimestamp()))))
+            sqlExecute(
+                'UPDATE sent SET status=?, lastactiontime=? WHERE ackdata=?',
+                'ackreceived', int(time.time()), data[readPosition:])
+            queues.UISignalQueue.put((
+                'updateSentItemStatusByAckdata', (
+                    data[readPosition:], tr._translate(
+                        "MainWindow",
+                        "Acknowledgement of the message received {0}"
+                    ).format(l10n.formatTimestamp()))
+            ))
         else:
             logger.debug('This object is not an acknowledgement bound for me.')
 
-    
+
     def processgetpubkey(self, data):
         if len(data) > 200:
             logger.info('getpubkey is abnormally long. Sanity check failed. Ignoring object.')

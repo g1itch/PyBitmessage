@@ -28,7 +28,7 @@ import os
 
 from bmconfigparser import BMConfigParser
 import defaults
-import tr # translate
+import tr
 
 # FIXME: from debug import logger crashes PyBitmessage due to a circular
 # dependency. The debug module will also override/disable logging.getLogger()
@@ -36,6 +36,7 @@ import tr # translate
 import logging as logger
 
 configSection = "bitmessagesettings"
+
 
 # Error thrown when the RPC call returns an error.
 class RPCError (Exception):
@@ -85,20 +86,25 @@ class namecoinConnection (object):
     # string.  If it doesn't contain a slash, id/ is prepended.  We return
     # the result as (Error, Address) pair, where the Error is an error
     # message to display or None in case of success.
-    def query (self, string):
-        slashPos = string.find ("/")
+    def query(self, string):
+        slashPos = string.find("/")
         if slashPos < 0:
             string = "id/" + string
 
         try:
             if self.nmctype == "namecoind":
-                res = self.callRPC ("name_show", [string])
+                res = self.callRPC("name_show", [string])
                 res = res["value"]
             elif self.nmctype == "nmcontrol":
-                res = self.callRPC ("data", ["getValue", string])
+                res = self.callRPC("data", ["getValue", string])
                 res = res["reply"]
-                if res == False:
-                    return (tr._translate("MainWindow",'The name %1 was not found.').arg(unicode(string)), None)
+                if res is False:
+                    return (
+                        tr._translate(
+                            "MainWindow", "The name {0} was not found."
+                        ).format(string),
+                        None
+                    )
             else:
                 assert False
         except RPCError as exc:
@@ -107,16 +113,29 @@ class namecoinConnection (object):
                 errmsg = exc.error["message"]
             else:
                 errmsg = exc.error
-            return (tr._translate("MainWindow",'The namecoin query failed (%1)').arg(unicode(errmsg)), None)
+            return (
+                tr._translate(
+                    "MainWindow", "The namecoin query failed ({0})"
+                ).format(errmsg),
+                None
+            )
         except Exception as exc:
             logger.exception("Namecoin query exception")
-            return (tr._translate("MainWindow",'The namecoin query failed.'), None)
+            return (
+                tr._translate("MainWindow", "The namecoin query failed."),
+                None
+            )
 
         try:
-            val = json.loads (res)
+            val = json.loads(res)
         except:
             logger.exception("Namecoin query json exception")
-            return (tr._translate("MainWindow",'The name %1 has no valid JSON data.').arg(unicode(string)), None)            
+            return (
+                tr._translate(
+                    "MainWindow", "The name {0} has no valid JSON data."
+                ).format(string),
+                None
+            )
 
         if "bitmessage" in val:
             if "name" in val:
@@ -124,7 +143,13 @@ class namecoinConnection (object):
             else:
                 ret = val["bitmessage"]
             return (None, ret)
-        return (tr._translate("MainWindow",'The name %1 has no associated Bitmessage address.').arg(unicode(string)), None) 
+        return (
+            tr._translate(
+                "MainWindow",
+                "The name {0} has no associated Bitmessage address."
+            ).format(string),
+            None
+        )
 
     # Test the connection settings.  This routine tries to query a "getinfo"
     # command, and builds either an error message or a success message with
@@ -146,7 +171,13 @@ class namecoinConnection (object):
                   versStr = "0.%d.%d" % (v1, v2)
                 else:
                   versStr = "0.%d.%d.%d" % (v1, v2, v3)
-                return ('success',  tr._translate("MainWindow",'Success!  Namecoind version %1 running.').arg(unicode(versStr)) )
+                return (
+                    'success',
+                    tr._translate(
+                        "MainWindow",
+                        "Success!  Namecoind version {0} running."
+                    ).format(versStr)
+                )
 
             elif self.nmctype == "nmcontrol":
                 res = self.callRPC ("data", ["status"])
