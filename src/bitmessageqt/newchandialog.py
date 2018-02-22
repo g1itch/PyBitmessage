@@ -9,27 +9,19 @@ from tr import _translate
 from utils import str_chan
 import widgets
 
-from debug import logger
-
 
 class NewChanDialog(QtWidgets.QDialog, RetranslateMixin):
     def __init__(self, parent=None):
         super(NewChanDialog, self).__init__(parent)
         widgets.load('newchandialog.ui', self)
         self.parent = parent
-        validator = AddressValidator(
+        self.chanAddress.setValidator(AddressValidator(
             self.chanAddress, self.chanPassPhrase,
-            self.validatorFeedback, self.buttonBox, False)
-        try:
-            validator.checkData()
-        except:
-            logger.warning("NewChanDialog.__init__", exc_info=True)
-        # logger.warning("NewChanDialog.__init__, validator.checkData()")
-
-        self.chanAddress.setValidator(validator)
+            self.validatorFeedback,
+            self.buttonBox.button(QtWidgets.QDialogButtonBox.Ok), False))
         self.chanPassPhrase.setValidator(PassPhraseValidator(
             self.chanPassPhrase, self.chanAddress, self.validatorFeedback,
-            self.buttonBox, False))
+            self.buttonBox.button(QtWidgets.QDialogButtonBox.Ok), False))
 
         self.timer = QtCore.QTimer()
         self.timer.timeout.connect(self.delayedUpdateStatus)
@@ -48,13 +40,13 @@ class NewChanDialog(QtWidgets.QDialog, RetranslateMixin):
             addressGeneratorQueue.put((
                 'createChan', 4, 1,
                 str_chan + ' ' + str(self.chanPassPhrase.text()),
-                self.chanPassPhrase.text(), True
+                self.chanPassPhrase.text().encode('utf-8'), True
             ))
         else:
             addressGeneratorQueue.put((
                 'joinChan', addBMIfNotPresent(self.chanAddress.text()),
                 str_chan + ' ' + str(self.chanPassPhrase.text()),
-                self.chanPassPhrase.text(), True
+                self.chanPassPhrase.text().encode('utf-8'), True
             ))
         addressGeneratorReturnValue = apiAddressGeneratorReturnQueue.get(True)
         if (len(addressGeneratorReturnValue) > 0

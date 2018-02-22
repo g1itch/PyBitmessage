@@ -1,4 +1,4 @@
-from qtpy import QtGui, QtWidgets
+from qtpy import QtGui
 from Queue import Empty
 
 from addresses import decodeAddress, addBMIfNotPresent
@@ -13,17 +13,16 @@ from debug import logger
 class AddressPassPhraseValidatorMixin(object):
     def setParams(
         self, passPhraseObject=None, addressObject=None,
-        feedBackObject=None, buttonBox=None, addressMandatory=True
+        feedBackObject=None, button=None, addressMandatory=True
     ):
         self.addressObject = addressObject
         self.passPhraseObject = passPhraseObject
         self.feedBackObject = feedBackObject
-        self.buttonBox = buttonBox
         self.addressMandatory = addressMandatory
         self.isValid = False
         # save default text
-        self.okButton = self.buttonBox.button(QtWidgets.QDialogButtonBox.Ok)
-        self.okButtonLabel = self.okButton.text()
+        self.okButton = button
+        self.okButtonLabel = button.text()
 
     def setError(self, string):
         if string is not None and self.feedBackObject is not None:
@@ -33,7 +32,7 @@ class AddressPassPhraseValidatorMixin(object):
             self.feedBackObject.setStyleSheet("QLabel { color : red; }")
             self.feedBackObject.setText(string)
         self.isValid = False
-        if self.buttonBox:
+        if self.okButton:
             self.okButton.setEnabled(False)
             if string is not None and self.feedBackObject is not None:
                 self.okButton.setText(
@@ -50,7 +49,7 @@ class AddressPassPhraseValidatorMixin(object):
             self.feedBackObject.setStyleSheet("QLabel { }")
             self.feedBackObject.setText(string)
         self.isValid = True
-        if self.buttonBox:
+        if self.okButton:
             self.okButton.setEnabled(True)
             self.okButton.setText(self.okButtonLabel)
 
@@ -80,7 +79,7 @@ class AddressPassPhraseValidatorMixin(object):
                     "AddressValidator",
                     "Address already present as one of your identities."
                 ))
-            return (QtGui.QValidator.Intermediate, 0)
+            return
         if addressGeneratorReturnValue[0] == \
                 'chan name does not match address':
             self.setError(
@@ -89,7 +88,7 @@ class AddressPassPhraseValidatorMixin(object):
                     "Although the Bitmessage address you entered was"
                     " valid, it doesn\'t match the chan name."
                 ))
-            return (QtGui.QValidator.Intermediate, 0)
+            return
         self.setOK(
             _translate(
                 "MainWindow", "Passphrase and address appear to be valid."))
@@ -120,7 +119,7 @@ class AddressPassPhraseValidatorMixin(object):
                     "Chan name/passphrase needed."
                     " You didn't enter a chan name."
                 ))
-            return (QtGui.QValidator.Intermediate, pos)
+            return (QtGui.QValidator.Intermediate, s, pos)
 
         if self.addressMandatory or address is not None:
             # check if address already exists:
@@ -130,7 +129,7 @@ class AddressPassPhraseValidatorMixin(object):
                         "AddressValidator",
                         "Address already present as one of your identities."
                     ))
-                return (QtGui.QValidator.Intermediate, pos)
+                return (QtGui.QValidator.Intermediate, s, pos)
 
             # version too high
             if decodeAddress(address)[0] == 'versiontoohigh':
@@ -142,7 +141,7 @@ class AddressPassPhraseValidatorMixin(object):
                         " for us to handle. Perhaps you need to upgrade"
                         " Bitmessage."
                     ))
-                return (QtGui.QValidator.Intermediate, pos)
+                return (QtGui.QValidator.Intermediate, s, pos)
 
             # invalid
             if decodeAddress(address)[0] != 'success':
@@ -151,7 +150,7 @@ class AddressPassPhraseValidatorMixin(object):
                         "AddressValidator",
                         "The Bitmessage address is not valid."
                     ))
-                return (QtGui.QValidator.Intermediate, pos)
+                return (QtGui.QValidator.Intermediate, s, pos)
 
         # this just disables the OK button without changing the feedback text
         # but only if triggered by textEdited, not by clicking the Ok button
@@ -171,13 +170,13 @@ class AddressPassPhraseValidatorMixin(object):
             ))
 
         if self.okButton.hasFocus():
-            return (self.returnValid(), pos)
+            return (self.returnValid(), s, pos)
         else:
-            return (QtGui.QValidator.Intermediate, pos)
+            return (QtGui.QValidator.Intermediate, s, pos)
 
     def checkData(self):
         try:
-            return self.validate("", 0)
+            return self.validate(u"", 0)
         except Exception:
             logger.warning("Exception in validate():", exc_info=True)
 
@@ -185,11 +184,11 @@ class AddressPassPhraseValidatorMixin(object):
 class AddressValidator(QtGui.QValidator, AddressPassPhraseValidatorMixin):
     def __init__(
         self, parent=None, passPhraseObject=None, feedBackObject=None,
-        buttonBox=None, addressMandatory=True
+        button=None, addressMandatory=True
     ):
         super(AddressValidator, self).__init__(parent)
         self.setParams(
-            passPhraseObject, parent, feedBackObject, buttonBox,
+            passPhraseObject, parent, feedBackObject, button,
             addressMandatory
         )
 
@@ -197,10 +196,10 @@ class AddressValidator(QtGui.QValidator, AddressPassPhraseValidatorMixin):
 class PassPhraseValidator(QtGui.QValidator, AddressPassPhraseValidatorMixin):
     def __init__(
         self, parent=None, addressObject=None, feedBackObject=None,
-        buttonBox=None, addressMandatory=False
+        button=None, addressMandatory=False
     ):
         super(PassPhraseValidator, self).__init__(parent)
         self.setParams(
-            parent, addressObject, feedBackObject, buttonBox,
+            parent, addressObject, feedBackObject, button,
             addressMandatory
         )
