@@ -2396,8 +2396,7 @@ class MyForm(settingsmixin.SMainWindow):
                 self.getCurrentSearchLine(tab)
             ):
                 continue
-            # inventoryHash surprisingly is of type unicode
-            inventoryHash = inventoryHash.encode('utf-8')
+
             if tableWidget == inbox \
                 and self.getCurrentAccount(treeWidget) == acct.address \
                 and self.getCurrentFolder(treeWidget) \
