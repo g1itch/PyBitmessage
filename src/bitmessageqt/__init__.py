@@ -1089,8 +1089,6 @@ class MyForm(settingsmixin.SMainWindow):
             self, tableWidget, msgfolder, msgid, toAddress, fromAddress,
             subject, received, read
     ):
-        font = QtGui.QFont()
-        font.setBold(True)
         if toAddress == str_broadcast_subscribers:
             acct = accountClass(fromAddress)
         else:
@@ -1116,6 +1114,8 @@ class MyForm(settingsmixin.SMainWindow):
         time_item.setFlags(
             QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
         if not read:
+            font = QtGui.QFont()
+            font.setBold(True)
             time_item.setFont(font)
         items.append(time_item)
         self.addMessageListItem(tableWidget, items)
