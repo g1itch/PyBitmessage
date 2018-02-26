@@ -1995,13 +1995,12 @@ class MyForm(settingsmixin.SMainWindow):
 
         # To send a message to specific people (rather than broadcast)
         if sendMessageToPeople:
-            toAddressesList = [
+            toAddressesList = set([
                 s.strip() for s in toAddresses.replace(',', ';').split(';')
-            ]
+            ])
             # remove duplicate addresses. If the user has one address
             # with a BM- and the same address without the BM-, this will
             # not catch it. They'll send the message to the person twice.
-            toAddressesList = list(set(toAddressesList))
             for toAddress in toAddressesList:
                 if toAddress != '':
                     # label plus address
@@ -2248,7 +2247,7 @@ class MyForm(settingsmixin.SMainWindow):
                     '''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''', *t)
 
                 toLabel = str_broadcast_subscribers
-                
+
                 self.displayNewSentMessage(
                     toAddress, toLabel, fromAddress, subject, message, ackdata)
 
