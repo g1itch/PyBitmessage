@@ -136,8 +136,10 @@ class MsgDecode(object):
         # Throw away any extra lines (headers) after the subject.
         if subject:
             subject = subject.splitlines()[0]
-        self.subject = subject
-        self.body = body
+        # Field types should be the same for all message types
+        self.subject = unicode(subject, 'utf-8', 'replace')
+        self.body = unicode(body, 'utf-8', 'replace')
+
 
 if __name__ == '__main__':
     import random
