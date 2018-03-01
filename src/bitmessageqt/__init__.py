@@ -1918,10 +1918,10 @@ class MyForm(settingsmixin.SMainWindow):
         for address in sorted(
             oldRows, key=lambda x: oldRows[x][2], reverse=True
         ):
-            if address in newRows:
+            try:
                 completerList.append(
                     newRows.pop(address)[0] + " <" + address + ">")
-            else:
+            except KeyError:
                 self.ui.tableWidgetAddressBook.removeRow(oldRows[address][2])
         for address in newRows:
             addRow(address, newRows[address][0], newRows[address][1])
