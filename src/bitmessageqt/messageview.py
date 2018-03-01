@@ -45,9 +45,9 @@ class MessageView(QtWidgets.QTextBrowser):
         # super will actually automatically take care of zooming
         super(MessageView, self).wheelEvent(event)
         if (
-                (QtWidgets.QApplication.queryKeyboardModifiers()
-                 & QtCore.Qt.ControlModifier) == QtCore.Qt.ControlModifier
-                and event.orientation() == QtCore.Qt.Vertical
+            (QtWidgets.QApplication.queryKeyboardModifiers()
+             & QtCore.Qt.ControlModifier) == QtCore.Qt.ControlModifier
+            and event.angleDelta().y() != 0
         ):
             zoom = self.currentFont().pointSize() * 100 / self.defaultFontPointSize
             QtWidgets.QApplication.activeWindow().statusbar.showMessage(
