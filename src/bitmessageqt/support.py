@@ -5,7 +5,6 @@ import os
 import time
 
 import account
-from qtpy import QtCore
 from tr import _translate
 from bmconfigparser import BMConfigParser
 import defaults
@@ -135,16 +134,13 @@ def createSupportMessage(myapp):
     portablemode = "True" \
         if state.appdata == paths.lookupExeFolder() else "False"
     cpow = "True" if proofofwork.bmpow else "False"
-    openclpow = str(BMConfigParser().safeGet('bitmessagesettings', 'opencl')) if openclEnabled() else "None"
+    openclpow = str(
+        BMConfigParser().safeGet('bitmessagesettings', 'opencl')
+    ) if openclEnabled() else "None"
     locale = getTranslationLanguage()
-    try:
-        socks = BMConfigParser().get('bitmessagesettings', 'socksproxytype')
-    except:
-        socks = "N/A"
-    try:
-        upnp = BMConfigParser().get('bitmessagesettings', 'upnp')
-    except:
-        upnp = "N/A"
+    socks = BMConfigParser().safeGet(
+        'bitmessagesettings', 'socksproxytype', "N/A")
+    upnp = BMConfigParser().safeGet('bitmessagesettings', 'upnp', "N/A")
     connectedhosts = len(network.stats.connectedHostsList())
 
     myapp.ui.textEditMessage.setText(

@@ -117,9 +117,7 @@ class BMAccount(object):
     def getLabel(self, address=None):
         if address is None:
             address = self.address
-        label = address
-        if BMConfigParser().has_section(address):
-            label = BMConfigParser().get(address, 'label')
+        label = BMConfigParser().safeGet(address, 'label', address)
         queryreturn = sqlQuery(
             '''select label from addressbook where address=?''', address)
         if queryreturn != []:

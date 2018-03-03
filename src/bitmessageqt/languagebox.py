@@ -19,20 +19,15 @@ class LanguageBox(QtWidgets.QComboBox):
         self.populate()
 
     def populate(self):
-        self.languages = []
         self.clear()
-        localesPath = os.path.join(paths.codePath(), 'translations')
-        try:
-            configuredLocale = BMConfigParser().get(
-                'bitmessagesettings', 'userlocale', "system")
-        except:
-            configuredLocale = "system"
         self.addItem(
             _translate("settingsDialog", "System Settings", "system"),
             "system"
         )
         self.setCurrentIndex(0)
         self.setInsertPolicy(QtWidgets.QComboBox.InsertAlphabetically)
+
+        localesPath = os.path.join(paths.codePath(), 'translations')
         for translationFile in sorted(
             glob.glob(os.path.join(localesPath, "bitmessage_*.qm"))
         ):
@@ -45,6 +40,8 @@ class LanguageBox(QtWidgets.QComboBox):
                 locale = QtCore.QLocale(localeShort)
                 self.addItem(
                     locale.nativeLanguageName() or localeShort, localeShort)
+        configuredLocale = BMConfigParser().safeGet(
+            'bitmessagesettings', 'userlocale', "system")
         for i in range(self.count()):
             if self.itemData(i) == configuredLocale:
                 self.setCurrentIndex(i)

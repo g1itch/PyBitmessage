@@ -12,25 +12,25 @@ str_chan = '[chan]'
 def identiconize(address):
     size = 48
 
+    if not BMConfigParser().getboolean('bitmessagesettings', 'useidenticons'):
+        return QtGui.QIcon()
+    # else:
+    #     print("useidenticons = True")
+
     # If you include another identicon library, please generate an
     # example identicon with the following md5 hash:
     # 3fd4bf901b9d4ea1394f0fb358725b28
 
-    try:
-        identicon_lib = BMConfigParser().get(
-            'bitmessagesettings', 'identiconlib')
-    except:
-        # default to qidenticon_two_x
-        identicon_lib = 'qidenticon_two_x'
+    identicon_lib = BMConfigParser().safeGet(
+        'bitmessagesettings', 'identiconlib', 'qidenticon_two_x')
 
-    # As an 'identiconsuffix' you could put "@bitmessge.ch" or "@bm.addr" to make it compatible with other identicon generators. (Note however, that E-Mail programs might convert the BM-address to lowercase first.)
-    # It can be used as a pseudo-password to salt the generation of the identicons to decrease the risk
-    # of attacks where someone creates an address to mimic someone else's identicon.
+    # As an 'identiconsuffix' you could put "@bitmessge.ch" or "@bm.addr"
+    # to make it compatible with other identicon generators. (Note however,
+    # that E-Mail programs might convert the BM-address to lowercase first.)
+    # It can be used as a pseudo-password to salt the generation of
+    # the identicons to decrease the risk of attacks where someone creates
+    # an address to mimic someone else's identicon.
     identiconsuffix = BMConfigParser().get('bitmessagesettings', 'identiconsuffix')
-
-    if not BMConfigParser().getboolean('bitmessagesettings', 'useidenticons'):
-        idcon = QtGui.QIcon()
-        return idcon
 
     if (identicon_lib[:len('qidenticon')] == 'qidenticon'):
         # print identicon_lib
