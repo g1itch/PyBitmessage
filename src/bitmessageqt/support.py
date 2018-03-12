@@ -5,11 +5,11 @@ import sys
 import time
 
 import account
-from bmconfigparser import BMConfigParser
-from debug import logger
 import defaults
+import helper_db
+from bmconfigparser import BMConfigParser
 from foldertree import AccountMixin
-from helper_sql import *
+from helper_sql import sqlExecute
 from l10n import getTranslationLanguage
 from openclpow import openclAvailable, openclEnabled
 import paths
@@ -53,11 +53,13 @@ UPnP: {}
 Connected hosts: {}
 '''
 
+
 def checkAddressBook(myapp):
     sqlExecute('''DELETE from addressbook WHERE address=?''', OLD_SUPPORT_ADDRESS)
-    queryreturn = sqlQuery('''SELECT * FROM addressbook WHERE address=?''', SUPPORT_ADDRESS)
-    if queryreturn == []:
-        sqlExecute('''INSERT INTO addressbook VALUES (?,?)''', str(QtGui.QApplication.translate("Support", SUPPORT_LABEL)), SUPPORT_ADDRESS)
+    if helper_db.put_addressbook(
+        str(QtGui.QApplication.translate("Support", SUPPORT_LABEL)),
+        SUPPORT_ADDRESS
+    ):
         myapp.rerenderAddressBook()
 
 def checkHasNormalAddress():

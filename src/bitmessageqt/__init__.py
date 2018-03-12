@@ -33,8 +33,9 @@ from foldertree import (
 import settingsmixin
 import support
 from helper_ackPayload import genAckPayload
-from helper_sql import sqlQuery, sqlExecute, sqlExecuteChunked, sqlStoredProcedure
-import helper_search
+from helper_sql import (
+    sqlQuery, sqlExecute, sqlExecuteChunked, sqlStoredProcedure)
+import helper_db
 import l10n
 from utils import str_broadcast_subscribers, avatarize
 from account import (
@@ -1086,16 +1087,19 @@ class MyForm(settingsmixin.SMainWindow):
         if sortingEnabled:
             tableWidget.setSortingEnabled(True)
 
-    def addMessageListItemSent(self, tableWidget, toAddress, fromAddress, subject, status, ackdata, lastactiontime):
+    def addMessageListItemSent(
+            self, tableWidget, toAddress, fromAddress, subject,
+            status, ackdata, lastactiontime):
         acct = accountClass(fromAddress)
         if acct is None:
             acct = BMAccount(fromAddress)
         acct.parseMessage(toAddress, fromAddress, subject, "")
 
         items = []
-        MessageList_AddressWidget(items, str(toAddress), unicode(acct.toLabel, 'utf-8'))
-        MessageList_AddressWidget(items, str(fromAddress), unicode(acct.fromLabel, 'utf-8'))
-        MessageList_SubjectWidget(items, str(subject), unicode(acct.subject, 'utf-8', 'replace'))
+        MessageList_AddressWidget(items, str(toAddress), acct.toLabel)
+        MessageList_AddressWidget(items, str(fromAddress), acct.fromLabel)
+        MessageList_SubjectWidget(
+            items, str(subject), unicode(acct.subject, 'utf-8', 'replace'))
 
         if status == 'awaitingpubkey':
             statusText = _translate(
@@ -1161,14 +1165,18 @@ class MyForm(settingsmixin.SMainWindow):
         if acct is None:
             acct = BMAccount(fromAddress)
         acct.parseMessage(toAddress, fromAddress, subject, "")
-            
+
         items = []
-        #to
-        MessageList_AddressWidget(items, toAddress, unicode(acct.toLabel, 'utf-8'), not read)
+        # to
+        MessageList_AddressWidget(
+            items, toAddress, acct.toLabel, not read)
         # from
-        MessageList_AddressWidget(items, fromAddress, unicode(acct.fromLabel, 'utf-8'), not read)
+        MessageList_AddressWidget(
+            items, fromAddress, acct.fromLabel, not read)
         # subject
-        MessageList_SubjectWidget(items, str(subject), unicode(acct.subject, 'utf-8', 'replace'), not read)
+        MessageList_SubjectWidget(
+            items, str(subject), unicode(acct.subject, 'utf-8', 'replace'),
+            not read)
         # time received
         time_item = myTableWidgetItem(l10n.formatTimestamp(received))
         time_item.setToolTip(l10n.formatTimestamp(received))
@@ -1203,7 +1211,8 @@ class MyForm(settingsmixin.SMainWindow):
         tableWidget.setUpdatesEnabled(False)
         tableWidget.setSortingEnabled(False)
         tableWidget.setRowCount(0)
-        queryreturn = helper_search.search_sql(xAddress, account, "sent", where, what, False)
+        queryreturn = helper_db.search_sql(
+            xAddress, account, "sent", where, what, False)
 
         for row in queryreturn:
             toAddress, fromAddress, subject, status, ackdata, lastactiontime = row
@@ -1236,8 +1245,9 @@ class MyForm(settingsmixin.SMainWindow):
         tableWidget.setSortingEnabled(False)
         tableWidget.setRowCount(0)
 
-        queryreturn = helper_search.search_sql(xAddress, account, folder, where, what, unreadOnly)
-        
+        queryreturn = helper_db.search_sql(
+            xAddress, account, folder, where, what, unreadOnly)
+
         for row in queryreturn:
             msgfolder, msgid, toAddress, fromAddress, subject, received, read = row
             self.addMessageListItemInbox(tableWidget, msgfolder, msgid, toAddress, fromAddress, subject, received, read)
@@ -1902,8 +1912,7 @@ class MyForm(settingsmixin.SMainWindow):
 
         newRows = {}
         # subscriptions
-        queryreturn = sqlQuery('SELECT label, address FROM subscriptions WHERE enabled = 1')
-        for row in queryreturn:
+        for row in helper_db.get_subscriptions():
             label, address = row
             newRows[address] = [label, AccountMixin.SUBSCRIPTION]
         # chans
@@ -1913,8 +1922,7 @@ class MyForm(settingsmixin.SMainWindow):
             if (account.type == AccountMixin.CHAN and BMConfigParser().safeGetBoolean(address, 'enabled')):
                 newRows[address] = [account.getLabel(), AccountMixin.CHAN]
         # normal accounts
-        queryreturn = sqlQuery('SELECT * FROM addressbook')
-        for row in queryreturn:
+        for row in helper_db.get_addressbook():
             label, address = row
             newRows[address] = [label, AccountMixin.NORMAL]
 
@@ -2130,35 +2138,16 @@ class MyForm(settingsmixin.SMainWindow):
                         stealthLevel = BMConfigParser().safeGetInt(
                             'bitmessagesettings', 'ackstealthlevel')
                         ackdata = genAckPayload(streamNumber, stealthLevel)
-                        t = ()
-                        sqlExecute(
-                            '''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''',
-                            '',
-                            toAddress,
-                            ripe,
-                            fromAddress,
-                            subject,
-                            message,
-                            ackdata,
-                            int(time.time()), # sentTime (this will never change)
-                            int(time.time()), # lastActionTime
-                            0, # sleepTill time. This will get set when the POW gets done.
-                            'msgqueued',
-                            0, # retryNumber
-                            'sent', # folder
-                            encoding, # encodingtype
-                            BMConfigParser().getint('bitmessagesettings', 'ttl')
-                            )
+                        helper_db.put_sent(
+                            toAddress, fromAddress, subject, message, ackdata,
+                            'msgqueued', encoding, ripe
+                        )
 
-                        toLabel = ''
-                        queryreturn = sqlQuery('''select label from addressbook where address=?''',
-                                               toAddress)
-                        if queryreturn != []:
-                            for row in queryreturn:
-                                toLabel, = row
+                        toLabel = helper_db.get_label(toAddress) or ''
 
                         self.displayNewSentMessage(
-                            toAddress, toLabel, fromAddress, subject, message, ackdata)
+                            toAddress, toLabel, fromAddress, subject,
+                            message, ackdata)
                         queues.workerQueue.put(('sendmessage', toAddress))
 
                         self.click_pushButtonClear()
@@ -2185,29 +2174,13 @@ class MyForm(settingsmixin.SMainWindow):
                 # user interface when the POW is done generating.
                 streamNumber = decodeAddress(fromAddress)[2]
                 ackdata = genAckPayload(streamNumber, 0)
-                toAddress = str_broadcast_subscribers
-                ripe = ''
-                t = ('', # msgid. We don't know what this will be until the POW is done. 
-                     toAddress, 
-                     ripe, 
-                     fromAddress, 
-                     subject, 
-                     message, 
-                     ackdata, 
-                     int(time.time()), # sentTime (this will never change)
-                     int(time.time()), # lastActionTime
-                     0, # sleepTill time. This will get set when the POW gets done.
-                     'broadcastqueued', 
-                     0, # retryNumber
-                     'sent', # folder
-                     encoding, # encoding type
-                     BMConfigParser().getint('bitmessagesettings', 'ttl')
-                     )
-                sqlExecute(
-                    '''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''', *t)
+                toAddress = toLabel = str_broadcast_subscribers
 
-                toLabel = str_broadcast_subscribers
-                
+                helper_db.put_sent(
+                    toAddress, fromAddress, subject, message, ackdata,
+                    'broadcastqueued', encoding
+                )
+
                 self.displayNewSentMessage(
                     toAddress, toLabel, fromAddress, subject, message, ackdata)
 
@@ -2319,13 +2292,18 @@ class MyForm(settingsmixin.SMainWindow):
             treeWidget = self.widgetConvert(sent)
             if self.getCurrentFolder(treeWidget) != "sent":
                 continue
-            if treeWidget == self.ui.treeWidgetYourIdentities and self.getCurrentAccount(treeWidget) not in (fromAddress, None, False):
+            if treeWidget == self.ui.treeWidgetYourIdentities \
+                and self.getCurrentAccount(treeWidget) not in (
+                    fromAddress, None, False):
                 continue
             elif treeWidget in [self.ui.treeWidgetSubscriptions, self.ui.treeWidgetChans] and self.getCurrentAccount(treeWidget) != toAddress:
                 continue
-            elif not helper_search.check_match(toAddress, fromAddress, subject, message, self.getCurrentSearchOption(tab), self.getCurrentSearchLine(tab)):
+            elif not helper_db.check_match(
+                    toAddress, fromAddress, subject, message,
+                    self.getCurrentSearchOption(tab),
+                    self.getCurrentSearchLine(tab)):
                 continue
-            
+
             self.addMessageListItemSent(sent, toAddress, fromAddress, subject, "msgqueued", ackdata, time.time())
             self.getAccountTextedit(acct).setPlainText(unicode(message, 'utf-8', 'replace'))
             sent.setCurrentCell(0, 0)
@@ -2343,7 +2321,10 @@ class MyForm(settingsmixin.SMainWindow):
             if tab == 1:
                 tab = 2
             tableWidget = self.widgetConvert(treeWidget)
-            if not helper_search.check_match(toAddress, fromAddress, subject, message, self.getCurrentSearchOption(tab), self.getCurrentSearchLine(tab)):
+            if not helper_db.check_match(
+                    toAddress, fromAddress, subject, message,
+                    self.getCurrentSearchOption(tab),
+                    self.getCurrentSearchLine(tab)):
                 continue
             if tableWidget == inbox and self.getCurrentAccount(treeWidget) == acct.address and self.getCurrentFolder(treeWidget) in ["inbox", None]:
                 ret = self.addMessageListItemInbox(inbox, "inbox", inventoryHash, toAddress, fromAddress, subject, time.time(), 0)
@@ -2383,10 +2364,7 @@ class MyForm(settingsmixin.SMainWindow):
         except AttributeError:
             return
 
-        # First we must check to see if the address is already in the
-        # address book. The user cannot add it again or else it will
-        # cause problems when updating and deleting the entry.
-        if shared.isAddressInMyAddressBook(address):
+        if not helper_db.put_addressbook(label, address):
             self.updateStatusBar(_translate(
                 "MainWindow",
                 "Error: You cannot add the same address to your"
@@ -2395,30 +2373,25 @@ class MyForm(settingsmixin.SMainWindow):
             ))
             return
 
-        self.addEntryToAddressBook(address, label)
-
-    def addEntryToAddressBook(self, address, label):
-        if shared.isAddressInMyAddressBook(address):
-            return
-        sqlExecute('''INSERT INTO addressbook VALUES (?,?)''', label, address)
         self.rerenderMessagelistFromLabels()
         self.rerenderMessagelistToLabels()
         self.rerenderAddressBook()
 
     def addSubscription(self, address, label):
-        # This should be handled outside of this function, for error displaying
-        # and such, but it must also be checked here.
-        if shared.isAddressInMySubscriptionsList(address):
+        if not helper_db.put_subscriptions(label, address):
+            self.updateStatusBar(_translate(
+                "MainWindow",
+                "Error: You cannot add the same address to your"
+                " subscriptions twice. Perhaps rename the existing one"
+                " if you want."
+            ))
             return
-        # Add to database (perhaps this should be separated from the MyForm class)
-        sqlExecute(
-            '''INSERT INTO subscriptions VALUES (?,?,?)''',
-            label, address, True
-        )
+
         self.rerenderMessagelistFromLabels()
         shared.reloadBroadcastSendersForWhichImWatching()
         self.rerenderAddressBook()
         self.rerenderTabTreeSubscriptions()
+        return True
 
     def click_pushButtonAddSubscription(self):
         dialog = dialogs.NewSubscriptionDialog(self)
@@ -2428,19 +2401,9 @@ class MyForm(settingsmixin.SMainWindow):
         except AttributeError:
             return
 
-        # We must check to see if the address is already in the
-        # subscriptions list. The user cannot add it again or else it
-        # will cause problems when updating and deleting the entry.
-        if shared.isAddressInMySubscriptionsList(address):
-            self.updateStatusBar(_translate(
-                "MainWindow",
-                "Error: You cannot add the same address to your"
-                " subscriptions twice. Perhaps rename the existing one"
-                " if you want."
-            ))
+        if not self.addSubscription(address, label):
             return
 
-        self.addSubscription(address, label)
         # Now, if the user wants to display old broadcasts, let's get
         # them out of the inventory and put them
         # to the objectProcessorQueue to be processed
@@ -2781,11 +2744,7 @@ class MyForm(settingsmixin.SMainWindow):
         textEdit = self.getCurrentMessageTextedit()
         if not msgid:
             return
-        queryreturn = sqlQuery(
-            '''select message from inbox where msgid=?''', msgid)
-        if queryreturn != []:
-            for row in queryreturn:
-                messageText, = row
+        messageText = helper_db.get_message(msgid)
 
         lines = messageText.split('\n')
         totalLines = len(lines)
@@ -3020,24 +2979,20 @@ class MyForm(settingsmixin.SMainWindow):
             currentInboxRow, 1).data(QtCore.Qt.UserRole)
         recipientAddress = tableWidget.item(
             currentInboxRow, 0).data(QtCore.Qt.UserRole)
-        # Let's make sure that it isn't already in the address book
-        queryreturn = sqlQuery('''select * from blacklist where address=?''',
-                               addressAtCurrentInboxRow)
-        if queryreturn == []:
-            label = "\"" + tableWidget.item(currentInboxRow, 2).subject + "\" in " + BMConfigParser().get(recipientAddress, "label")
-            sqlExecute('''INSERT INTO blacklist VALUES (?,?, ?)''',
-                       label,
-                       addressAtCurrentInboxRow, True)
-            self.ui.blackwhitelist.rerenderBlackWhiteList()
-            self.updateStatusBar(_translate(
-                "MainWindow",
-                "Entry added to the blacklist. Edit the label to your liking.")
-            )
-        else:
+        label = "\"" + tableWidget.item(currentInboxRow, 2).subject + \
+            "\" in " + BMConfigParser().get(recipientAddress, "label")
+        if not helper_db.put_blacklist(label, addressAtCurrentInboxRow):
             self.updateStatusBar(_translate(
                 "MainWindow",
                 "Error: You cannot add the same address to your blacklist"
                 " twice. Try renaming the existing one if you want."))
+            return
+
+        self.ui.blackwhitelist.rerenderBlackWhiteList()
+        self.updateStatusBar(_translate(
+            "MainWindow",
+            "Entry added to the blacklist. Edit the label to your liking.")
+        )
 
     def deleteRowFromMessagelist(self, row = None, inventoryHash = None, ackData = None, messageLists = None):
         if messageLists is None:
@@ -3130,11 +3085,7 @@ class MyForm(settingsmixin.SMainWindow):
         # Retrieve the message data out of the SQL database
         msgid = str(tableWidget.item(
             currentInboxRow, 3).data(QtCore.Qt.UserRole).toPyObject())
-        queryreturn = sqlQuery(
-            '''select message from inbox where msgid=?''', msgid)
-        if queryreturn != []:
-            for row in queryreturn:
-                message, = row
+        message = helper_db.get_message(msgid)
 
         defaultFilename = "".join(x for x in subjectAtCurrentInboxRow if x.isalnum()) + '.txt'
         filename = QtGui.QFileDialog.getSaveFileName(self, _translate("MainWindow","Save As..."), defaultFilename, "Text files (*.txt);;All files (*.*)")
@@ -3243,15 +3194,6 @@ class MyForm(settingsmixin.SMainWindow):
 
     def on_action_AddressBookSubscribe(self):
         for item in self.getAddressbookSelectedItems():
-            # Then subscribe to it...
-            # provided it's not already in the address book
-            if shared.isAddressInMySubscriptionsList(item.address):
-                self.updateStatusBar(_translate(
-                    "MainWindow",
-                    "Error: You cannot add the same address to your"
-                    " subscriptions twice. Perhaps rename the existing"
-                    " one if you want."))
-                continue
             self.addSubscription(item.address, item.label)
             self.ui.tabWidget.setCurrentIndex(
                 self.ui.tabWidget.indexOf(self.ui.subscriptions)
