@@ -3,7 +3,7 @@
 A menu plugin showing QR-Code for bitmessage address in modal dialog.
 """
 
-from PyQt4 import QtGui, QtCore
+from qtpy import QtGui,  QtCore, QtWidgets
 import qrcode
 
 from pybitmessage.tr import _translate
@@ -35,23 +35,23 @@ class Image(qrcode.image.base.BaseImage):
             QtCore.Qt.black)
 
 
-class QRCodeDialog(QtGui.QDialog):
+class QRCodeDialog(QtWidgets.QDialog):
     """The dialog"""
     def __init__(self, parent):
         super(QRCodeDialog, self).__init__(parent)
-        self.image = QtGui.QLabel(self)
-        self.label = QtGui.QLabel(self)
+        self.image = QtWidgets.QLabel(self)
+        self.label = QtWidgets.QLabel(self)
         font = QtGui.QFont()
         font.setBold(True)
         font.setWeight(75)
         self.label.setFont(font)
         self.label.setAlignment(
             QtCore.Qt.AlignCenter | QtCore.Qt.AlignVCenter)
-        buttonBox = QtGui.QDialogButtonBox(self)
+        buttonBox = QtWidgets.QDialogButtonBox(self)
         buttonBox.setOrientation(QtCore.Qt.Horizontal)
-        buttonBox.setStandardButtons(QtGui.QDialogButtonBox.Ok)
+        buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Ok)
         buttonBox.accepted.connect(self.accept)
-        layout = QtGui.QVBoxLayout(self)
+        layout = QtWidgets.QVBoxLayout(self)
         layout.addWidget(self.image)
         layout.addWidget(self.label)
         layout.addWidget(buttonBox)
@@ -66,7 +66,7 @@ class QRCodeDialog(QtGui.QDialog):
         self.label.setText(text)
         self.image.setPixmap(
             qrcode.make(text, image_factory=Image).pixmap())
-        self.setFixedSize(QtGui.QWidget.sizeHint(self))
+        self.setFixedSize(QtWidgets.QWidget.sizeHint(self))
 
 
 def connect_plugin(form):
