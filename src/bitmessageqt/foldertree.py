@@ -123,10 +123,10 @@ class AccountMixin(object):
         return retval or unicode(self.address, 'utf-8')
 
 
-class BMTreeWidgetItem(QtGui.QTreeWidgetItem, AccountMixin):
+class BMTreeWidgetItem(QtWidgets.QTreeWidgetItem, AccountMixin):
     """A common abstract class for Tree widget item"""
     def __init__(self, parent, pos, address, unreadCount):
-        super(QtGui.QTreeWidgetItem, self).__init__()
+        super(QtWidgets.QTreeWidgetItem, self).__init__()
         self.setAddress(address)
         self.setUnreadCount(unreadCount)
         self._setup(parent, pos)
@@ -191,7 +191,7 @@ class Ui_FolderWidget(BMTreeWidgetItem):
             else:
                 return (x >= y if reverse else x < y)
 
-        return super(QtGui.QTreeWidgetItem, self).__lt__(other)
+        return super(QtWidgets.QTreeWidgetItem, self).__lt__(other)
 
 
 class Ui_AddressWidget(BMTreeWidgetItem, SettingsMixin):
@@ -294,10 +294,10 @@ class Ui_SubscriptionWidget(Ui_AddressWidget):
         return super(Ui_SubscriptionWidget, self).setData(column, role, value)
 
 
-class BMTableWidgetItem(QtGui.QTableWidgetItem, SettingsMixin):
+class BMTableWidgetItem(QtWidgets.QTableWidgetItem, SettingsMixin):
     """A common abstract class for Table widget item"""
     def __init__(self, parent=None, label=None, unread=False):
-        super(QtGui.QTableWidgetItem, self).__init__()
+        super(QtWidgets.QTableWidgetItem, self).__init__()
         self.setLabel(label)
         self.setUnread(unread)
         self._setup()
