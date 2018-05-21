@@ -129,7 +129,11 @@ class BMAccount(object):
             if queryreturn != []:
                 for row in queryreturn:
                     label, = row
-        return unicode(label, 'utf-8')
+        try:
+            return unicode(label, 'utf-8')
+        except TypeError:
+            print("WARNING: label is of type unicode:  %s" % label)
+            return label
 
     def parseMessage(self, toAddress, fromAddress, subject, message):
         self.toAddress = toAddress
