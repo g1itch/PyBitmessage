@@ -21,6 +21,17 @@ def loadFastSolver(codePath):
         except:
             raise FastSolverError()
 
+    # dh_python renames so
+    if platform.dist()[0] in ('debian', 'ubuntu'):
+        import glob
+        try:
+            return ctypes.CDLL(glob.glob(os.path.join(
+                codePath, "fastsolver",
+                "libfastsolver.{}*.so".format(platform.machine())
+            ))[0])
+        except (OSError, IndexError):
+            pass
+
     makePath = os.path.join(codePath, "fastsolver")
     path = os.path.join(codePath, "fastsolver/libfastsolver.so")
 

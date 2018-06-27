@@ -12,7 +12,7 @@ from src.version import softwareVersion
 EXTRAS_REQUIRE = {
     'gir': ['pygobject'],
     'notify2': ['notify2'],
-    'pyopencl': ['pyopencl', 'numpy'],
+    'opencl': ['pyopencl', 'numpy'],
     'prctl': ['python_prctl'],  # Named threads
     'qrcode': ['qrcode'],
     'sound;platform_system=="Windows"': ['winsound'],
@@ -49,6 +49,15 @@ if __name__ == "__main__":
     here = os.path.abspath(os.path.dirname(__file__))
     with open(os.path.join(here, 'README.md')) as f:
         README = f.read()
+
+    libfastsolver = Extension(
+        'pybitmessage.workprover.fastsolver.libfastsolver',
+        sources=[
+            'src/workprover/fastsolver/common.c',
+            'src/workprover/fastsolver/pthread.c'],
+        include_dirs=['src/workprover/fastsolver'],
+        libraries=['pthread', 'crypto'],
+    )
 
     installRequires = []
     packages = [
@@ -116,6 +125,7 @@ if __name__ == "__main__":
             ('share/icons/hicolor/24x24/apps/',
                 ['desktop/icons/24x24/pybitmessage.png'])
         ],
+        ext_modules=[libfastsolver],
         zip_safe=False,
         entry_points={
             'bitmessage.gui.menu': [
