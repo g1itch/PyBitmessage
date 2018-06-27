@@ -104,6 +104,11 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             except AttributeError:
                 # unimplemented command
                 logger.debug("unimplemented command %s", self.command)
+            except ValueError as e:
+                # node has ipv6 addr which is not supported by python
+                if e.message == 'unknown address family 10':
+                    logger.warning(
+                        "command %s from unsupported IPv6 address", self.command)
             except BMProtoInsufficientDataError:
                 logger.debug("packet length too short, skipping")
             except BMProtoExcessiveDataError:
