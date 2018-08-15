@@ -5,6 +5,7 @@ import shutil
 
 from setuptools import setup, Extension
 from setuptools.command.install import install
+from setuptools.command.sdist import sdist
 
 from src.version import softwareVersion
 
@@ -43,6 +44,16 @@ class InstallCmd(install):
             'desktop/icon24.png', 'desktop/icons/24x24/pybitmessage.png')
 
         return install.run(self)
+
+
+class SdistCmd(sdist):
+    def run(self):
+        """Write last commit into version.py"""
+        from src.paths import lastCommit
+        last_commit = lastCommit()
+        with open('src/version.py', 'ab') as out:
+            out.write('commit = %s' % last_commit)
+        return sdist.run(self)
 
 
 if __name__ == "__main__":
@@ -146,5 +157,8 @@ if __name__ == "__main__":
             # ]
         },
         scripts=['src/pybitmessage'],
-        cmdclass={'install': InstallCmd}
+        cmdclass={
+            'install': InstallCmd,
+            'sdist': SdistCmd
+        }
     )

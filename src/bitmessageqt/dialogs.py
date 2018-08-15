@@ -1,4 +1,6 @@
-import paths
+from datetime import datetime
+
+import version
 import widgets
 from address_dialogs import (
     AddAddressDialog, NewAddressDialog, NewSubscriptionDialog,
@@ -8,7 +10,6 @@ from newchandialog import NewChanDialog
 from PyQt4 import QtGui
 from retranslateui import RetranslateMixin
 from tr import _translate
-from version import softwareVersion
 
 
 __all__ = [
@@ -22,22 +23,29 @@ class AboutDialog(QtGui.QDialog, RetranslateMixin):
     def __init__(self, parent=None):
         super(AboutDialog, self).__init__(parent)
         widgets.load('about.ui', self)
-        last_commit = paths.lastCommit()
-        version = softwareVersion
+
+        # Adjusting version, commit and year info
+        full_version = version.softwareVersion
+        try:  # commit written by sdist setuptools command
+            last_commit = version.commit
+        except AttributeError:
+            import paths
+            last_commit = paths.lastCommit()
         commit = last_commit.get('commit')
         if commit:
-            version += '-' + commit[:7]
+            full_version += '-' + commit[:7]
         self.labelVersion.setText(
             self.labelVersion.text().replace(
-                ':version:', version
-            ).replace(':branch:', commit or 'v%s' % version)
+                ':version:', full_version
+            ).replace(':branch:', commit or 'v%s' % full_version)
         )
         self.labelVersion.setOpenExternalLinks(True)
 
-        try:
+        try:  # last copyright year from last commit
             self.label_2.setText(
                 self.label_2.text().replace(
-                    '2017', str(last_commit.get('time').year)
+                    '2017',
+                    str(datetime.fromtimestamp(last_commit.get('time')).year)
                 ))
         except AttributeError:
             pass

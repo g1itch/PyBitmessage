@@ -1,7 +1,6 @@
 import os
 import re
 import sys
-from datetime import datetime
 
 # When using py2exe or py2app, the variable frozen is added to the sys
 # namespace.  This can be used to setup a different code path for
@@ -126,9 +125,9 @@ def lastCommit():
         try:
             with open(githeadfile, 'rt') as githead:
                 line = tail(githead, 1)
-            result['commit'] = line.split()[1]
-            result['time'] = datetime.fromtimestamp(
-                float(re.search(r'>\s*(.*?)\s', line).group(1))
+            result.update(
+                commit=line.split()[1],
+                time=float(re.search(r'>\s*(.*?)\s', line).group(1))
             )
         except (IOError, AttributeError, TypeError):
             pass
