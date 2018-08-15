@@ -1,15 +1,13 @@
-from PyQt4 import QtGui
-from tr import _translate
-from retranslateui import RetranslateMixin
+import paths
 import widgets
-
-from newchandialog import NewChanDialog
 from address_dialogs import (
     AddAddressDialog, NewAddressDialog, NewSubscriptionDialog,
     RegenerateAddressesDialog, SpecialAddressBehaviorDialog, EmailGatewayDialog
 )
-
-import paths
+from newchandialog import NewChanDialog
+from PyQt4 import QtGui
+from retranslateui import RetranslateMixin
+from tr import _translate
 from version import softwareVersion
 
 
@@ -32,7 +30,7 @@ class AboutDialog(QtGui.QDialog, RetranslateMixin):
         self.labelVersion.setText(
             self.labelVersion.text().replace(
                 ':version:', version
-                ).replace(':branch:', commit or 'v%s' % version)
+            ).replace(':branch:', commit or 'v%s' % version)
         )
         self.labelVersion.setOpenExternalLinks(True)
 
@@ -58,7 +56,7 @@ class IconGlossaryDialog(QtGui.QDialog, RetranslateMixin):
         self.labelPortNumber.setText(_translate(
             "iconGlossaryDialog",
             "You are using TCP port %1. (This can be changed in the settings)."
-            ).arg(config.getint('bitmessagesettings', 'port')))
+        ).arg(config.getint('bitmessagesettings', 'port')))
         self.setFixedSize(QtGui.QWidget.sizeHint(self))
 
 
