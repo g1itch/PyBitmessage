@@ -53,6 +53,7 @@ UPnP: {}
 Connected hosts: {}
 '''
 
+
 def checkAddressBook(myapp):
     sqlExecute('''DELETE from addressbook WHERE address=?''', OLD_SUPPORT_ADDRESS)
     queryreturn = sqlQuery('''SELECT * FROM addressbook WHERE address=?''', SUPPORT_ADDRESS)
@@ -60,12 +61,14 @@ def checkAddressBook(myapp):
         sqlExecute('''INSERT INTO addressbook VALUES (?,?)''', str(QtGui.QApplication.translate("Support", SUPPORT_LABEL)), SUPPORT_ADDRESS)
         myapp.rerenderAddressBook()
 
+
 def checkHasNormalAddress():
     for address in account.getSortedAccounts():
         acct = account.accountClass(address)
         if acct.type == AccountMixin.NORMAL and BMConfigParser().safeGetBoolean(address, 'enabled'):
             return address
     return False
+
 
 def createAddressIfNeeded(myapp):
     if not checkHasNormalAddress():
@@ -75,18 +78,22 @@ def createAddressIfNeeded(myapp):
     myapp.rerenderComboBoxSendFrom()
     return checkHasNormalAddress()
 
+
 def createSupportMessage(myapp):
     checkAddressBook(myapp)
     address = createAddressIfNeeded(myapp)
     if state.shutdown:
         return
 
-    myapp.ui.lineEditSubject.setText(str(QtGui.QApplication.translate("Support", SUPPORT_SUBJECT)))
-    addrIndex = myapp.ui.comboBoxSendFrom.findData(address, QtCore.Qt.UserRole, QtCore.Qt.MatchFixedString | QtCore.Qt.MatchCaseSensitive)
-    if addrIndex == -1: # something is very wrong
+    myapp.lineEditSubject.setText(
+        str(QtGui.QApplication.translate("Support", SUPPORT_SUBJECT)))
+    addrIndex = myapp.comboBoxSendFrom.findData(
+        address, QtCore.Qt.UserRole,
+        QtCore.Qt.MatchFixedString | QtCore.Qt.MatchCaseSensitive)
+    if addrIndex == -1:  # something is very wrong
         return
-    myapp.ui.comboBoxSendFrom.setCurrentIndex(addrIndex)
-    myapp.ui.lineEditTo.setText(SUPPORT_ADDRESS)
+    myapp.comboBoxSendFrom.setCurrentIndex(addrIndex)
+    myapp.lineEditTo.setText(SUPPORT_ADDRESS)
 
     version = softwareVersion
     commit = paths.lastCommit().get('commit')
@@ -123,13 +130,16 @@ def createSupportMessage(myapp):
     upnp = BMConfigParser().safeGet('bitmessagesettings', 'upnp', "N/A")
     connectedhosts = len(network.stats.connectedHostsList())
 
-    myapp.ui.textEditMessage.setText(str(QtGui.QApplication.translate("Support", SUPPORT_MESSAGE)).format(version, os, architecture, pythonversion, opensslversion, frozen, portablemode, cpow, openclpow, locale, socks, upnp, connectedhosts))
+    myapp.textEditMessage.setText(
+        str(QtGui.QApplication.translate("Support", SUPPORT_MESSAGE)).format(
+            version, os, architecture, pythonversion, opensslversion, frozen,
+            portablemode, cpow, openclpow, locale, socks, upnp, connectedhosts))
 
     # single msg tab
-    myapp.ui.tabWidgetSend.setCurrentIndex(
-        myapp.ui.tabWidgetSend.indexOf(myapp.ui.sendDirect)
+    myapp.tabWidgetSend.setCurrentIndex(
+        myapp.tabWidgetSend.indexOf(myapp.sendDirect)
     )
     # send tab
-    myapp.ui.tabWidget.setCurrentIndex(
-        myapp.ui.tabWidget.indexOf(myapp.ui.send)
+    myapp.tabWidget.setCurrentIndex(
+        myapp.tabWidget.indexOf(myapp.send)
     )
