@@ -341,22 +341,11 @@ class MainWindow(Window):
         # Initialize the user's list of addresses on the 'Messages' tab.
         self.rerenderTabTreeMessages()
 
-        # Set welcome message
-        self.textEditInboxMessage.setText(_translate("MainWindow", """
-        Welcome to easy and secure Bitmessage
-            * send messages to other people
-            * send broadcast messages like twitter or
-            * discuss in chan(nel)s with other people
-        """))
-
         # Initialize the address book
         self.rerenderAddressBook()
 
         # Initialize the Subscriptions
         self.rerenderSubscriptions()
-
-        # Put the colored icon on the status bar
-        self.statusbar.insertPermanentWidget(0, self.pushButtonStatusIcon)
 
         self.numberOfMessagesProcessed = 0
         self.numberOfBroadcastsProcessed = 0
