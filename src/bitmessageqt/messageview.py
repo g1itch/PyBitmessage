@@ -29,6 +29,10 @@ class MessageView(QtGui.QTextBrowser):
         self.verticalScrollBar().valueChanged.connect(self.lazyRender)
         self.setWrappingWidth()
 
+    def text(self):
+        """A stub for retranslateui"""
+        return self.toPlainText()
+
     def resizeEvent(self, event):
         """View resize event handler"""
         super(MessageView, self).resizeEvent(event)
