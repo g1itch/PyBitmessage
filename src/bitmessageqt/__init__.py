@@ -1180,7 +1180,7 @@ class MainWindow(Window):
             # FIXME: it's called very often
             self.retranslateUi()
             self.init_identities_popup_menu(False)
-            self.blackwhitelist.init_blacklist_popup_menu(False)
+            self.blackwhitelist.init_blacklist_popup_menu()
         if event.type() == QtCore.QEvent.WindowStateChange:
             if self.windowState() & QtCore.Qt.WindowMinimized:
                 if BMConfigParser().getboolean('bitmessagesettings', 'minimizetotray') and not 'darwin' in sys.platform:
