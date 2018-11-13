@@ -19,18 +19,18 @@ SOURCES	= 	../addresses.py\
 			../bitmessageqt/__init__.py\
 			../bitmessageqt/account.py\
 			../bitmessageqt/address_dialogs.py\
-			../bitmessageqt/bitmessageui.py\
 			../bitmessageqt/blacklist.py\
 			../bitmessageqt/dialogs.py\
 			../bitmessageqt/foldertree.py\
 			../bitmessageqt/languagebox.py\
+                        ../bitmessageqt/main.py\
 			../bitmessageqt/messagecompose.py\
 			../bitmessageqt/messageview.py\
 			../bitmessageqt/networkstatus.py\
 			../bitmessageqt/newchandialog.py\
 			../bitmessageqt/safehtmlparser.py\
 			../bitmessageqt/settings.py\
-                        ../plugins/qrcodeui.py
+                        ../plugins/menu_qrcode.py
 
 FORMS = \
     ../bitmessageqt/about.ui\
@@ -40,11 +40,13 @@ FORMS = \
     ../bitmessageqt/emailgateway.ui\
     ../bitmessageqt/help.ui\
     ../bitmessageqt/iconglossary.ui\
+    ../bitmessageqt/main.ui\
     ../bitmessageqt/networkstatus.ui\
     ../bitmessageqt/newaddressdialog.ui\
     ../bitmessageqt/newchandialog.ui\
     ../bitmessageqt/newsubscriptiondialog.ui\
     ../bitmessageqt/regenerateaddresses.ui\
+    ../bitmessageqt/settings.ui\
     ../bitmessageqt/specialaddressbehavior.ui
 
 TRANSLATIONS = \
