@@ -128,7 +128,7 @@ class IdenticonRendererBase(object):
 
         return image
 
-    def decode(self, code):
+    def decode(self, code, twoColor):
         """virtual functions"""
         raise NotImplementedError
 
