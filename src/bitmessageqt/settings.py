@@ -455,55 +455,45 @@ class SettingsDialog(QtGui.QDialog, RetranslateMixin):
             self.config.set('bitmessagesettings', 'stopresendingafterxdays', '')
             self.config.set('bitmessagesettings', 'stopresendingafterxmonths', '')
             shared.maximumLengthOfTimeToBotherResendingMessages = float('inf')
+
         try:
-            float(self.lineEditDays.text())
-            lineEditDaysIsValidFloat = True
-        except:
-            lineEditDaysIsValidFloat = False
-        try:
-            float(self.lineEditMonths.text())
-            lineEditMonthsIsValidFloat = True
-        except:
-            lineEditMonthsIsValidFloat = False
-        if lineEditDaysIsValidFloat and not lineEditMonthsIsValidFloat:
-            self.lineEditMonths.setText("0")
-        if lineEditMonthsIsValidFloat and not lineEditDaysIsValidFloat:
+            days = float(self.lineEditDays.text())
+        except ValueError:
             self.lineEditDays.setText("0")
-        if lineEditDaysIsValidFloat or lineEditMonthsIsValidFloat:
-            if (
-                float(self.lineEditDays.text()) >= 0 and
-                float(self.lineEditMonths.text()) >= 0
-            ):
-                shared.maximumLengthOfTimeToBotherResendingMessages = (
-                    float(str(self.lineEditDays.text())) * 24 * 60 * 60 +
-                    float(str(self.lineEditMonths.text())) *
-                    60 * 60 * 24 * 365 / 12
+            days = 0.0
+        try:
+            months = float(self.lineEditMonths.text())
+        except ValueError:
+            self.lineEditMonths.setText("0")
+            months = 0.0
+
+        if days >= 0 and months >= 0:
+            shared.maximumLengthOfTimeToBotherResendingMessages = \
+                days * 24 * 60 * 60 + months * 60 * 60 * 24 * 365 / 12
+            if shared.maximumLengthOfTimeToBotherResendingMessages < 432000:
+                # If the time period is less than 5 hours, we give
+                # zero values to all fields. No message will be sent again.
+                QtGui.QMessageBox.about(
+                    self,
+                    _translate("MainWindow", "Will not resend ever"),
+                    _translate(
+                        "MainWindow",
+                        "Note that the time limit you entered is less"
+                        " than the amount of time Bitmessage waits for"
+                        " the first resend attempt therefore your"
+                        " messages will never be resent.")
                 )
-                if shared.maximumLengthOfTimeToBotherResendingMessages < 432000:
-                    # If the time period is less than 5 hours, we give
-                    # zero values to all fields. No message will be sent again.
-                    QtGui.QMessageBox.about(
-                        self,
-                        _translate("MainWindow", "Will not resend ever"),
-                        _translate(
-                            "MainWindow",
-                            "Note that the time limit you entered is less"
-                            " than the amount of time Bitmessage waits for"
-                            " the first resend attempt therefore your"
-                            " messages will never be resent.")
-                    )
-                    self.config.set(
-                        'bitmessagesettings', 'stopresendingafterxdays', '0')
-                    self.config.set(
-                        'bitmessagesettings', 'stopresendingafterxmonths', '0')
-                    shared.maximumLengthOfTimeToBotherResendingMessages = 0
-                else:
-                    self.config.set(
-                        'bitmessagesettings', 'stopresendingafterxdays',
-                        str(float(self.lineEditDays.text())))
-                    self.config.set(
-                        'bitmessagesettings', 'stopresendingafterxmonths',
-                        str(float(self.lineEditMonths.text())))
+                self.config.set(
+                    'bitmessagesettings', 'stopresendingafterxdays', '0')
+                self.config.set(
+                    'bitmessagesettings', 'stopresendingafterxmonths', '0')
+                shared.maximumLengthOfTimeToBotherResendingMessages = 0.0
+            else:
+                self.config.set(
+                    'bitmessagesettings', 'stopresendingafterxdays', str(days))
+                self.config.set(
+                    'bitmessagesettings', 'stopresendingafterxmonths',
+                    str(months))
 
         self.config.save()
 
