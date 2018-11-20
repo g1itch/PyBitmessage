@@ -17,11 +17,10 @@ import widgets
 from bmconfigparser import BMConfigParser
 from helper_sql import sqlExecute, sqlStoredProcedure
 from network.asyncore_pollchoose import set_rates
-from retranslateui import RetranslateMixin
 from tr import _translate
 
 
-class SettingsDialog(QtGui.QDialog, RetranslateMixin):
+class SettingsDialog(QtGui.QDialog):
     """The "Settings" dialog"""
     def __init__(self, parent=None, firstrun=False):
         super(SettingsDialog, self).__init__(parent)

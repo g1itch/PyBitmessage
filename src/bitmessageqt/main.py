@@ -10,11 +10,10 @@ import widgets
 from bmconfigparser import BMConfigParser
 from debug import logger
 from foldertree import AddressBookCompleter
-from retranslateui import RetranslateMixin
 from tr import _translate
 
 
-class Window(settingsmixin.SMainWindow, RetranslateMixin):
+class Window(settingsmixin.SMainWindow):
     """The main PyBitmessage's window"""
     uifile = 'main.ui'
 
@@ -91,6 +90,12 @@ class Window(settingsmixin.SMainWindow, RetranslateMixin):
             if dontconnect else
             _translate("MainWindow", "Go offline", None)
         )
+
+    def retranslateUi(self):
+        """Update widgets' texts which is not taken from ui-file"""
+        self.updateHumanFriendlyTTLDescription(int(
+            self.horizontalSliderTTL.tickPosition() ** 3.199 + 3600))
+        self.networkstatus.retranslateUi()
 
     # FIXME: this is not best place for this func
     def change_translation(self, newlocale=None):

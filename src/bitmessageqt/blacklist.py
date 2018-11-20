@@ -1,16 +1,16 @@
 from PyQt4 import QtCore, QtGui
-from tr import _translate
+
 import widgets
 from addresses import addBMIfNotPresent
 from bmconfigparser import BMConfigParser
 from dialogs import AddAddressDialog
 from helper_sql import sqlExecute, sqlQuery
-from retranslateui import RetranslateMixin
+from tr import _translate
 from utils import avatarize
 from uisignaler import UISignaler
 
 
-class Blacklist(QtGui.QWidget, RetranslateMixin):
+class Blacklist(QtGui.QWidget):
     def __init__(self, parent=None):
         super(Blacklist, self).__init__(parent)
         widgets.load('blacklist.ui', self)

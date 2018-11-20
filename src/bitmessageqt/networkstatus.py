@@ -15,12 +15,11 @@ import shared
 import widgets
 from inventory import Inventory
 from network.connectionpool import BMConnectionPool
-from retranslateui import RetranslateMixin
 from tr import _translate
 from uisignaler import UISignaler
 
 
-class NetworkStatus(QtGui.QWidget, RetranslateMixin):
+class NetworkStatus(QtGui.QWidget):
     """Network status tab"""
     def __init__(self, parent=None):
         super(NetworkStatus, self).__init__(parent)
@@ -34,8 +33,6 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
             header.setSortIndicator(0, QtCore.Qt.AscendingOrder)
 
         self.startup = time.localtime()
-        self.labelStartupTime.setText(_translate("networkstatus", "Since startup on %1").arg(
-            l10n.formatTimestamp(self.startup)))
 
         self.UISignalThread = UISignaler.get()
         # pylint: disable=no-member
@@ -238,6 +235,7 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
         self.updateNumberOfObjectsToBeSynced()
 
     def retranslateUi(self):
-        super(NetworkStatus, self).retranslateUi()
-        self.labelStartupTime.setText(_translate("networkstatus", "Since startup on %1").arg(
-            l10n.formatTimestamp(self.startup)))
+        """Update widgets' texts which is not taken from ui-file"""
+        self.labelStartupTime.setText(_translate(
+            "networkstatus", "Since startup on %1"
+        ).arg(l10n.formatTimestamp(self.startup)))
