@@ -6,13 +6,12 @@ from bmconfigparser import BMConfigParser
 from dialogs import AddAddressDialog
 from helper_sql import sqlExecute, sqlQuery
 from queues import UISignalQueue
-from retranslateui import RetranslateMixin
 from tr import _translate
 from uisignaler import UISignaler
 from utils import avatarize
 
 
-class Blacklist(QtGui.QWidget, RetranslateMixin):
+class Blacklist(QtGui.QWidget):
     def __init__(self, parent=None):
         super(Blacklist, self).__init__(parent)
         widgets.load('blacklist.ui', self)
