@@ -13,6 +13,11 @@ from bmconfigparser import BMConfigParser
 from debug import logger
 from helper_bootstrap import dns
 
+try:
+    from plugins.plugin import get_plugins
+except ImportError:
+    get_plugins = False
+
 knownNodesLock = threading.Lock()
 knownNodes = {stream: {} for stream in range(1, 4)}
 
@@ -38,6 +43,10 @@ DEFAULT_NODES = (
 DEFAULT_NODES_ONION = (
     state.Peer('quzwelsuziwqgpt2.onion', 8444),
 )
+
+check_plugins = [
+    check for check in get_plugins('nodes.validator')
+] if get_plugins else []
 
 
 def json_serialize_knownnodes(output):
@@ -214,6 +223,12 @@ def cleanupKnownNodes():
                         needToWriteKnownNodesToDisk = True
                         del knownNodes[stream][node]
                         continue
+                    # check with pluggable validators
+                    for check in check_plugins:
+                        if not check(node):
+                            logger.debug('Invalid node: %s', node)
+                            needToWriteKnownNodesToDisk = True
+                            del knownNodes[stream][node]
                 except TypeError:
                     logger.warning('Error in %s', node)
             keys = []
