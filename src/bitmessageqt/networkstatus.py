@@ -238,6 +238,13 @@ class NetworkStatus(QtGui.QWidget):
 
     def retranslateUi(self):
         """Update widgets' texts which is not taken from ui-file"""
+        self.labelTotalConnections.setText(
+            _translate(
+                "networkstatus", "Total Connections: %1").arg(
+                    str(self.tableWidgetConnectionCount.rowCount())))
         self.labelStartupTime.setText(_translate(
             "networkstatus", "Since startup on %1"
         ).arg(l10n.formatTimestamp(self.startup)))
+        self.updateNumberOfMessagesProcessed()
+        self.updateNumberOfBroadcastsProcessed()
+        self.updateNumberOfPubkeysProcessed()
