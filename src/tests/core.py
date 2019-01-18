@@ -219,7 +219,8 @@ class TestCore(unittest.TestCase):
 
 def run():
     """Starts all tests defined in this module"""
-    loader = unittest.TestLoader()
+    loader = unittest.defaultTestLoader
     loader.sortTestMethodsUsing = None
     suite = loader.loadTestsFromTestCase(TestCore)
+    suite.addTests(loader.loadTestsFromName('tests.msgobj'))
     return unittest.TextTestRunner(verbosity=2).run(suite)
