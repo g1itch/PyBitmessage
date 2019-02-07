@@ -136,7 +136,7 @@ class Keystore(object):
             content, plugin = self.config.safeGet(
                 'bitmessagesettings', 'keystore').split(':')
             plugin = get_plugin('keystore', name=plugin)(self)
-        except (ValueError, TypeError):
+        except (ValueError, TypeError, AttributeError):
             plugin = None
 
         if not plugin:
