@@ -12,6 +12,7 @@ def _tr_dummy(context, text, disambiguation=None, n=None):
 
 if state.enableGUI and not state.curses:
     try:
+        from fallback import qtpy  # noqa:F401
         from qtpy import QtWidgets, QtCore, API
     except ImportError:
         _translate = _tr_dummy
