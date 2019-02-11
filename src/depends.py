@@ -3,6 +3,8 @@ Utility functions to check the availability of dependencies
 and suggest how it may be installed
 """
 
+# flake8: noqa:E402
+
 import sys
 
 # Only really old versions of Python don't have sys.hexversion. We don't
@@ -365,9 +367,13 @@ def check_pyqt():
     PyQt 4.8 or later.
     """
     # pylint: disable=no-member
-    qtpy = try_import(
-        'qtpy',
-        'PyBitmessage requires qtpy, PyQt 4.8 or later and Qt 4.7 or later.')
+    try:
+        from fallback import qtpy
+    except ImportError:
+        logger.error(
+            'PyBitmessage requires qtpy, PyQt 4.8 or later and Qt 4.7 or later.'
+        )
+        qtpy = None
 
     if not qtpy:
         return False
