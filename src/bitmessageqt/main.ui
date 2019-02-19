@@ -178,7 +178,7 @@
              </item>
             </layout>
            </widget>
-           <widget class="STableWidget" name="tableWidgetInbox">
+           <widget class="InboxMessagelist" name="messagelistInbox">
             <property name="contextMenuPolicy">
              <enum>Qt::CustomContextMenu</enum>
             </property>
@@ -224,26 +224,6 @@
             <attribute name="verticalHeaderDefaultSectionSize">
              <number>26</number>
             </attribute>
-            <column>
-             <property name="text">
-              <string>To</string>
-             </property>
-            </column>
-            <column>
-             <property name="text">
-              <string>From</string>
-             </property>
-            </column>
-            <column>
-             <property name="text">
-              <string>Subject</string>
-             </property>
-            </column>
-            <column>
-             <property name="text">
-              <string>Received</string>
-             </property>
-            </column>
            </widget>
            <widget class="MessageView" name="textEditInboxMessage">
             <property name="baseSize">
@@ -1605,6 +1585,11 @@ p, li { white-space: pre-wrap; }
    <header>bitmessageqt.settingsmixin</header>
   </customwidget>
   <customwidget>
+   <class>InboxMessagelist</class>
+   <extends>QTableView</extends>
+   <header>bitmessageqt.messagelist</header>
+  </customwidget>
+  <customwidget>
    <class>SSplitter</class>
    <extends>QSplitter</extends>
    <header>bitmessageqt.settingsmixin</header>
@@ -1617,7 +1602,7 @@ p, li { white-space: pre-wrap; }
   </customwidget>
  </customwidgets>
  <tabstops>
-  <tabstop>tableWidgetInbox</tabstop>
+  <tabstop>messagelistInbox</tabstop>
   <tabstop>textEditInboxMessage</tabstop>
   <tabstop>comboBoxSendFrom</tabstop>
   <tabstop>lineEditTo</tabstop>
@@ -1919,7 +1904,7 @@ p, li { white-space: pre-wrap; }
    </hints>
   </connection>
   <connection>
-   <sender>tableWidgetInbox</sender>
+   <sender>messagelistInbox</sender>
    <signal>customContextMenuRequested(QPoint)</signal>
    <receiver>MainWindow</receiver>
    <slot>on_context_menuInbox()</slot>
@@ -2783,10 +2768,10 @@ p, li { white-space: pre-wrap; }
    </hints>
   </connection>
   <connection>
-   <sender>tableWidgetInbox</sender>
-   <signal>itemSelectionChanged()</signal>
+   <sender>messagelistInbox</sender>
+   <signal>messageSelected(QString)</signal>
    <receiver>MainWindow</receiver>
-   <slot>tableWidgetInboxItemClicked</slot>
+   <slot>messagelistSelect</slot>
    <hints>
     <hint type="sourcelabel">
      <x>20</x>

@@ -372,7 +372,7 @@ class MainWindow(Window):
         self.treeWidgetChans.keyPressEvent = self.treeWidgetKeyPressEvent
 
         # Key press in messagelist
-        self.tableWidgetInbox.keyPressEvent = self.tableWidgetKeyPressEvent
+        self.messagelistInbox.keyPressEvent = self.tableWidgetKeyPressEvent
         self.tableWidgetInboxSubscriptions.keyPressEvent = self.tableWidgetKeyPressEvent
         self.tableWidgetInboxChans.keyPressEvent = self.tableWidgetKeyPressEvent
 
@@ -535,29 +535,6 @@ class MainWindow(Window):
         )
 
     def updateUnreadStatus(self, widget, row, msgid, unread=True):
-        """
-        Switch unread for item of msgid and related items in
-        other STableWidgets "All Accounts" and "Chans"
-        """
-        related = [self.tableWidgetInbox, self.tableWidgetInboxChans]
-        try:
-            related.remove(widget)
-            related = related.pop()
-        except ValueError:
-            rrow = None
-            related = []
-        else:
-            # maybe use instead:
-            # rrow = related.row(msgid), msgid should be QTableWidgetItem
-            # related = related.findItems(msgid, QtCore.Qt.MatchExactly),
-            # returns an empty list
-            for rrow in xrange(related.rowCount()):
-                if msgid == str(related.item(rrow, 3).data(
-                        QtCore.Qt.UserRole).toPyObject()):
-                    break
-            else:
-                rrow = None
-
         status = widget.item(row, 0).unread
         if status == unread:
             font = QtGui.QFont()
@@ -565,15 +542,7 @@ class MainWindow(Window):
             widget.item(row, 3).setFont(font)
             for col in (0, 1, 2):
                 widget.item(row, col).setUnread(not status)
-
-            try:
-                related.item(rrow, 3).setFont(font)
-            except (TypeError, AttributeError):
-                pass
-            else:
-                for col in (0, 1, 2):
-                    related.item(rrow, col).setUnread(not status)
-
+            
     def propagateUnreadCount(self, address = None, folder = "inbox", widget = None, type = 1):
         widgets = [self.treeWidgetYourIdentities, self.treeWidgetSubscriptions, self.treeWidgetChans]
         queryReturn = sqlQuery("SELECT toaddress, folder, COUNT(msgid) AS cnt FROM inbox WHERE read = 0 GROUP BY toaddress, folder")
@@ -1348,7 +1317,8 @@ class MainWindow(Window):
     def updateSentItemStatusByAckdata(self, ackdata, textToDisplay):
         if type(ackdata) is str:
             ackdata = QtCore.QByteArray(ackdata)
-        for sent in [self.tableWidgetInbox, self.tableWidgetInboxSubscriptions, self.tableWidgetInboxChans]:
+        for sent in (
+                self.tableWidgetInboxSubscriptions, self.tableWidgetInboxChans):
             treeWidget = self.widgetConvert(sent)
             if self.getCurrentFolder(treeWidget) != "sent":
                 continue
@@ -1372,10 +1342,10 @@ class MainWindow(Window):
                         sent.item(i, 3).setText(textToDisplay)
 
     def removeInboxRowByMsgid(self, msgid):  # msgid and inventoryHash are the same thing
-        for inbox in ([
-            self.tableWidgetInbox,
+        for inbox in (
             self.tableWidgetInboxSubscriptions,
-            self.tableWidgetInboxChans]):
+            self.tableWidgetInboxChans
+        ):
             for i in range(inbox.rowCount()):
                 if msgid == str(inbox.item(i, 3).data(QtCore.Qt.UserRole).toPyObject()):
                     self.updateStatusBar(
@@ -1391,8 +1361,7 @@ class MainWindow(Window):
             "MainWindow",
             "New version of PyBitmessage is available: %1. Download it"
             " from https://github.com/Bitmessage/PyBitmessage/releases/latest"
-            ).arg(self.notifiedNewVersion)
-        )
+        ).arg(self.notifiedNewVersion))
 
     def displayAlert(self, title, text, exitAfterUserClicksOk):
         self.updateStatusBar(text)
@@ -1401,17 +1370,17 @@ class MainWindow(Window):
             os._exit(0)
 
     def rerenderMessagelistFromLabels(self):
-        for messagelist in (self.tableWidgetInbox, self.tableWidgetInboxChans, self.tableWidgetInboxSubscriptions):
+        for messagelist in (self.tableWidgetInboxChans, self.tableWidgetInboxSubscriptions):
             for i in range(messagelist.rowCount()):
                 messagelist.item(i, 1).setLabel()
 
     def rerenderMessagelistToLabels(self):
-        for messagelist in (self.tableWidgetInbox, self.tableWidgetInboxChans, self.tableWidgetInboxSubscriptions):
+        for messagelist in (self.tableWidgetInboxChans, self.tableWidgetInboxSubscriptions):
             for i in range(messagelist.rowCount()):
                 messagelist.item(i, 0).setLabel()
 
     def rerenderAddressBook(self):
-        def addRow (address, label, type):
+        def addRow(address, label, type):
             self.tableWidgetAddressBook.insertRow(0)
             newItem = Ui_AddressBookWidgetItemLabel(address, unicode(label, 'utf-8'), type)
             self.tableWidgetAddressBook.setItem(0, 0, newItem)
@@ -2876,20 +2845,18 @@ class MainWindow(Window):
             self.treeWidgetSubscriptions.mapToGlobal(point))
 
     def widgetConvert(self, widget):
-        if widget == self.tableWidgetInbox:
-            return self.treeWidgetYourIdentities
-        elif widget == self.tableWidgetInboxSubscriptions:
+        # if widget == self.tableWidgetInbox:
+        #     return self.treeWidgetYourIdentities
+        if widget == self.tableWidgetInboxSubscriptions:
             return self.treeWidgetSubscriptions
         elif widget == self.tableWidgetInboxChans:
             return self.treeWidgetChans
         elif widget == self.treeWidgetYourIdentities:
-            return self.tableWidgetInbox
+            return self.messagelistInbox
         elif widget == self.treeWidgetSubscriptions:
             return self.tableWidgetInboxSubscriptions
         elif widget == self.treeWidgetChans:
             return self.tableWidgetInboxChans
-        else:
-            return None
 
     def getCurrentTreeWidget(self):
         currentIndex = self.tabWidget.currentIndex()
@@ -2917,17 +2884,15 @@ class MainWindow(Window):
 
     def getCurrentMessagelist(self):
         currentIndex = self.tabWidget.currentIndex();
-        messagelistList = [
-            self.tableWidgetInbox,
-            False,
+        messagelistList = (
             self.tableWidgetInboxSubscriptions,
             self.tableWidgetInboxChans,
-        ]
-        if currentIndex >= 0 and currentIndex < len(messagelistList):
-            return messagelistList[currentIndex]
+        )
+        if currentIndex >= 2 and currentIndex - 2 < len(messagelistList):
+            return messagelistList[currentIndex - 2]
         else:
             return False
-            
+
     def getAccountMessagelist(self, account):
         try:
             if account.type == AccountMixin.CHAN:
@@ -3493,6 +3458,12 @@ class MainWindow(Window):
         messageTextedit.setCurrentFont(QtGui.QFont())
         messageTextedit.setTextColor(QtGui.QColor())
         messageTextedit.setContent(message)
+
+    def messagelistSelect(self, msg):
+        messageTextedit = self.getCurrentMessageTextedit()
+        if not messageTextedit:
+            return
+        messageTextedit.setContent(msg)
 
     def tableWidgetAddressBookItemChanged(self, item):
         if item.type == AccountMixin.CHAN:
