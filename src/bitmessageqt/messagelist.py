@@ -78,7 +78,7 @@ class AccountFormatter(object):
 class InboxTableModel(QtCore.QAbstractTableModel):
     table = 'inbox'
     fields = (
-        'msgid', 'toaddress', 'fromaddress', 'subject', 'received', 'read')
+        'msgid', 'folder', 'toaddress', 'fromaddress', 'subject', 'received', 'read')
     header = (
         {'field': 'fromaddress',
          'label': _translate("MainWindow", "From"),
@@ -157,6 +157,10 @@ class InboxTableModel(QtCore.QAbstractTableModel):
         return sqlQuery(
             'SELECT message FROM inbox WHERE msgid = ?', msgid
         )[0][0]
+
+    def updateFilter(self, *args, **kwargs):
+        self.filter.update(*args, **kwargs)
+        self.emit(QtCore.SIGNAL("layoutChanged()"))
 
 
 class InboxMessagelist(QtGui.QTableView):

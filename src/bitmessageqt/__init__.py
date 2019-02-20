@@ -735,6 +735,16 @@ class MainWindow(Window):
         tableWidget.horizontalHeaderItem(3).setText(_translate("MainWindow", "Sent", None))
         tableWidget.setUpdatesEnabled(True)
 
+    def switchMessagelist(
+        self, view, account,
+        folder='inbox', search_option=None, search_line=None
+    ):
+        model = view.model()
+        update = {'folder': folder}
+        if account:
+            update['toaddress'] = account
+        model.updateFilter(update)
+
     # Load messages from database file
     def loadMessagelist(self, tableWidget, account, folder="inbox", where="", what="", unreadOnly = False):
         if folder == 'sent':
@@ -2883,7 +2893,7 @@ class MainWindow(Window):
             return self.treeWidgetYourIdentities
 
     def getCurrentMessagelist(self):
-        currentIndex = self.tabWidget.currentIndex();
+        currentIndex = self.tabWidget.currentIndex()
         messagelistList = (
             self.tableWidgetInboxSubscriptions,
             self.tableWidgetInboxChans,
@@ -3369,14 +3379,18 @@ class MainWindow(Window):
         messageTextedit = self.getCurrentMessageTextedit()
         if messageTextedit:
             messageTextedit.setPlainText(QtCore.QString(""))
-        messagelist = self.getCurrentMessagelist()
-        if messagelist:
-            account = self.getCurrentAccount()
-            folder = self.getCurrentFolder()
-            treeWidget = self.getCurrentTreeWidget()
-            # refresh count indicator
-            self.propagateUnreadCount(account.address if hasattr(account, 'address') else None, folder, treeWidget, 0)
-            self.loadMessagelist(messagelist, account, folder, searchOption, searchLine)
+        messagelist = self.getCurrentMessagelist() or self.messagelistInbox
+        # ??
+        account = self.getCurrentAccount()
+        folder = self.getCurrentFolder()
+        treeWidget = self.getCurrentTreeWidget()
+        if isinstance(messagelist, QtGui.QTableView):
+            self.switchMessagelist(
+                messagelist, account, folder, searchOption, searchLine)
+            return
+        # refresh count indicator
+        self.propagateUnreadCount(account.address if hasattr(account, 'address') else None, folder, treeWidget, 0)
+        self.loadMessagelist(messagelist, account, folder, searchOption, searchLine)
 
     def treeWidgetItemChanged(self, item, column):
         # only for manual edits. automatic edits (setText) are ignored
