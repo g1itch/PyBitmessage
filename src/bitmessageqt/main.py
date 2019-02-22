@@ -52,7 +52,7 @@ class Window(settingsmixin.SMainWindow):
 
         # splitters
         for splitter in (
-            self.inboxHorizontalSplitter,
+            # self.inboxHorizontalSplitter,
             self.sendHorizontalSplitter,
             self.subscriptionsHorizontalSplitter,
             self.chansHorizontalSplitter
@@ -63,7 +63,7 @@ class Window(settingsmixin.SMainWindow):
             splitter.setCollapsible(1, False)
 
         for splitter in (
-            self.inboxMessagecontrolSplitter,
+            # self.inboxMessagecontrolSplitter,
             self.subscriptionsMessagecontrolSplitter,
             self.chansMessagecontrolSplitter
         ):

@@ -2,7 +2,10 @@ from collections import OrderedDict
 
 from PyQt4 import QtCore, QtGui
 
+import account
+import foldertree
 import l10n
+import widgets
 from bmconfigparser import BMConfigParser
 from debug import logger
 from helper_sql import sqlQuery, sqlExecute
@@ -93,7 +96,8 @@ class InboxTableModel(QtCore.QAbstractTableModel):
 
     def __init__(self, parent=None):
         super(InboxTableModel, self).__init__()
-        self.filter = InboxFilter(fields=self.fields)
+        # folder='*' gives empty set
+        self.filter = InboxFilter(folder='*', fields=self.fields)
         self.fields = ','.join(self.fields)
         self.query = 'SELECT %%s FROM %s ' % self.table
         self.sort = ' ORDER BY received DESC'
@@ -159,8 +163,10 @@ class InboxTableModel(QtCore.QAbstractTableModel):
         )[0][0]
 
     def updateFilter(self, *args, **kwargs):
+        prev = self.filter.__str__()
         self.filter.update(*args, **kwargs)
-        self.emit(QtCore.SIGNAL("layoutChanged()"))
+        if prev != self.filter.__str__():
+            self.emit(QtCore.SIGNAL("layoutChanged()"))
 
 
 class InboxMessagelist(QtGui.QTableView):
@@ -170,8 +176,80 @@ class InboxMessagelist(QtGui.QTableView):
 
     def currentChanged(self, cur_id, prev_id):
         row = cur_id.row()
-        if row == prev_id.row():
+        if row and row == prev_id.row():
             return
+        # what if folder changed?
         self.model().setRead(row)
         msg = self.model().getMessage(row)
         self.emit(QtCore.SIGNAL("messageSelected(QString)"), msg)
+
+    def folderChanged(self, cur_folder, prev_folder):
+        if cur_folder == prev_folder:
+            return
+        try:
+            folder = cur_folder.folderName
+        except AttributeError:
+            folder = 'inbox'
+        update = {'folder': folder}
+        if cur_folder.address:
+            update['toaddress'] = cur_folder.address
+        self.model().updateFilter(update)
+        self.selectRow(0)
+
+
+class TreeWidgetIdentities(QtGui.QTreeWidget):
+    def __init__(self, parent):
+        super(TreeWidgetIdentities, self).__init__(parent)
+        folders = ('inbox', 'new', 'sent', 'trash')
+        accounts = account.getSortedAccounts() + account.getSortedSubscriptions().keys()
+        top = foldertree.Ui_AddressWidget(self, 0, None, 0, True)
+        for i, folder in enumerate(folders):
+            foldertree.Ui_FolderWidget(top, i, None, folder, 0)
+        for i, addr in enumerate(accounts):
+            top = foldertree.Ui_AddressWidget(
+                self, i, addr, 0,
+                BMConfigParser().safeGetBoolean(addr, 'enabled'))
+            for j, folder in enumerate(folders):
+                foldertree.Ui_FolderWidget(top, j, addr, folder, 0)
+        self.header().setSortIndicator(0, QtCore.Qt.AscendingOrder)
+
+    def filterAccountType(self, account_type):
+        header = self.headerItem()
+        if account_type == foldertree.AccountMixin.CHAN:
+            header.setText(0, _translate("MainWindow", "Chans"))
+            header.setIcon(0, QtGui.QIcon(":/newPrefix/images/can-icon-16px.png"))
+        elif account_type == foldertree.AccountMixin.SUBSCRIPTION:
+            header.setText(0, _translate("MainWindow", "Subscriptions"))
+            header.setIcon(0, QtGui.QIcon(":/newPrefix/images/subscriptions.png"))
+        for i in xrange(self.topLevelItemCount()):
+            item = self.topLevelItem(i)
+            if item.type != account_type:
+                self.setItemHidden(item, True)
+
+
+class MessagelistControl(QtGui.QWidget):
+    @QtCore.pyqtProperty(int)
+    def AccountType(self):
+        return self._account_type
+
+    def setAccountType(self, value):
+        self._account_type = value
+
+    def __init__(self, parent=None):
+        super(MessagelistControl, self).__init__(parent)
+        widgets.load('messagelistcontrol.ui', self)
+
+        self.horizontalSplitter.setStretchFactor(0, 0)
+        self.horizontalSplitter.setStretchFactor(1, 1)
+        self.horizontalSplitter.setCollapsible(0, False)
+        self.horizontalSplitter.setCollapsible(1, False)
+
+        self.verticalSplitter.setStretchFactor(0, 0)
+        self.verticalSplitter.setStretchFactor(1, 1)
+        self.verticalSplitter.setStretchFactor(2, 2)
+        self.verticalSplitter.setCollapsible(0, False)
+        self.verticalSplitter.setCollapsible(1, False)
+        self.verticalSplitter.setCollapsible(2, False)
+        self.verticalSplitter.handle(1).setEnabled(False)
+
+        self.treeWidget.filterAccountType(self.AccountType)

@@ -155,23 +155,22 @@ class MainWindow(Window):
                 j += 1
             widget.setUnreadCount(unread)
             i += 1
-        
-        treeWidget.setSortingEnabled(True)
 
+        treeWidget.setSortingEnabled(True)
 
     def rerenderTabTreeMessages(self):
         self.rerenderTabTree('messages')
 
     def rerenderTabTreeChans(self):
         self.rerenderTabTree('chan')
-        
+
     def rerenderTabTree(self, tab):
-        if tab == 'messages':
-            treeWidget = self.treeWidgetYourIdentities
-        elif tab == 'chan':
-            treeWidget = self.treeWidgetChans
+        if tab != 'chan':
+            return
+
+        treeWidget = self.treeWidgetChans
         folders = Ui_FolderWidget.folderWeight.keys()
-        
+
         # sort ascending when creating
         if treeWidget.topLevelItemCount() == 0:
             treeWidget.header().setSortIndicator(
@@ -179,7 +178,7 @@ class MainWindow(Window):
         # init dictionary
         db = {}
         enabled = {}
-        
+
         for toAddress in getSortedAccounts():
             isEnabled = BMConfigParser().getboolean(
                 toAddress, 'enabled')
@@ -188,17 +187,14 @@ class MainWindow(Window):
             isMaillinglist = BMConfigParser().safeGetBoolean(
                 toAddress, 'mailinglist')
 
-            if treeWidget == self.treeWidgetYourIdentities:
-                if isChan:
-                    continue
-            elif treeWidget == self.treeWidgetChans:
+            if treeWidget == self.treeWidgetChans:
                 if not isChan:
                     continue
 
             db[toAddress] = {}
             for folder in folders:
                 db[toAddress][folder] = 0
-                
+
             enabled[toAddress] = isEnabled
 
         # get number of (unread) messages
@@ -209,17 +205,17 @@ class MainWindow(Window):
             total += cnt
             if toaddress in db and folder in db[toaddress]:
                 db[toaddress][folder] = cnt
-        if treeWidget == self.treeWidgetYourIdentities:
-            db[None] = {}
-            db[None]["inbox"] = total
-            db[None]["new"] = total
-            db[None]["sent"] = 0
-            db[None]["trash"] = 0
-            enabled[None] = True
-        
+        # if treeWidget == self.treeWidgetYourIdentities:
+        #     db[None] = {}
+        #     db[None]["inbox"] = total
+        #     db[None]["new"] = total
+        #     db[None]["sent"] = 0
+        #     db[None]["trash"] = 0
+        #     enabled[None] = True
+
         if treeWidget.isSortingEnabled():
             treeWidget.setSortingEnabled(False)
-        
+
         widgets = {}
         i = 0
         while i < treeWidget.topLevelItemCount():
@@ -367,17 +363,17 @@ class MainWindow(Window):
         self.UISignalThread.start()
 
         # Key press in tree view
-        self.treeWidgetYourIdentities.keyPressEvent = self.treeWidgetKeyPressEvent
+        # self.treeWidgetYourIdentities.keyPressEvent = self.treeWidgetKeyPressEvent
         self.treeWidgetSubscriptions.keyPressEvent = self.treeWidgetKeyPressEvent
         self.treeWidgetChans.keyPressEvent = self.treeWidgetKeyPressEvent
 
         # Key press in messagelist
-        self.messagelistInbox.keyPressEvent = self.tableWidgetKeyPressEvent
+        # self.messagelistInbox.keyPressEvent = self.tableWidgetKeyPressEvent
         self.tableWidgetInboxSubscriptions.keyPressEvent = self.tableWidgetKeyPressEvent
         self.tableWidgetInboxChans.keyPressEvent = self.tableWidgetKeyPressEvent
 
         # Key press in messageview
-        self.textEditInboxMessage.keyPressEvent = self.textEditKeyPressEvent
+        # self.textEditInboxMessage.keyPressEvent = self.textEditKeyPressEvent
         self.textEditInboxMessageSubscriptions.keyPressEvent = self.textEditKeyPressEvent
         self.textEditInboxMessageChans.keyPressEvent = self.textEditKeyPressEvent
 
@@ -544,7 +540,7 @@ class MainWindow(Window):
                 widget.item(row, col).setUnread(not status)
             
     def propagateUnreadCount(self, address = None, folder = "inbox", widget = None, type = 1):
-        widgets = [self.treeWidgetYourIdentities, self.treeWidgetSubscriptions, self.treeWidgetChans]
+        widgets = [self.treeWidgetSubscriptions, self.treeWidgetChans]
         queryReturn = sqlQuery("SELECT toaddress, folder, COUNT(msgid) AS cnt FROM inbox WHERE read = 0 GROUP BY toaddress, folder")
         totalUnread = {}
         normalUnread = {}
@@ -1076,9 +1072,9 @@ class MainWindow(Window):
         self.rerenderTabTreeMessages()
         self.rerenderTabTreeSubscriptions()
         self.rerenderTabTreeChans()
-        if self.getCurrentFolder(self.treeWidgetYourIdentities) == "trash":
-            self.loadMessagelist(self.tableWidgetInbox, self.getCurrentAccount(self.treeWidgetYourIdentities), "trash")
-        elif self.getCurrentFolder(self.treeWidgetSubscriptions) == "trash":
+        # if self.getCurrentFolder(self.treeWidgetYourIdentities) == "trash":
+        #     self.loadMessagelist(self.tableWidgetInbox, self.getCurrentAccount(self.treeWidgetYourIdentities), "trash")
+        if self.getCurrentFolder(self.treeWidgetSubscriptions) == "trash":
             self.loadMessagelist(self.tableWidgetInboxSubscriptions, self.getCurrentAccount(self.treeWidgetSubscriptions), "trash")
         elif self.getCurrentFolder(self.treeWidgetChans) == "trash":
             self.loadMessagelist(self.tableWidgetInboxChans, self.getCurrentAccount(self.treeWidgetChans), "trash")
@@ -1829,12 +1825,12 @@ class MainWindow(Window):
             treeWidget = self.widgetConvert(sent)
             if self.getCurrentFolder(treeWidget) != "sent":
                 continue
-            if (
-                treeWidget == self.treeWidgetYourIdentities and
-                self.getCurrentAccount(treeWidget)
-                not in (fromAddress, None, False)
-            ):
-                continue
+            # if (
+            #     treeWidget == self.treeWidgetYourIdentities and
+            #     self.getCurrentAccount(treeWidget)
+            #     not in (fromAddress, None, False)
+            # ):
+            #     continue
             elif treeWidget in [self.treeWidgetSubscriptions, self.treeWidgetChans] and self.getCurrentAccount(treeWidget) != toAddress:
                 continue
             elif not helper_search.check_match(toAddress, fromAddress, subject, message, self.getCurrentSearchOption(tab), self.getCurrentSearchLine(tab)):
@@ -1852,7 +1848,7 @@ class MainWindow(Window):
         inbox = self.getAccountMessagelist(acct)
         ret = None
         tab = -1
-        for treeWidget in [self.treeWidgetYourIdentities, self.treeWidgetSubscriptions, self.treeWidgetChans]:
+        for treeWidget in [self.treeWidgetSubscriptions, self.treeWidgetChans]:
             tab += 1
             if tab == 1:
                 tab = 2
@@ -1861,12 +1857,12 @@ class MainWindow(Window):
                 continue
             if tableWidget == inbox and self.getCurrentAccount(treeWidget) == acct.address and self.getCurrentFolder(treeWidget) in ["inbox", None]:
                 ret = self.addMessageListItemInbox(inbox, "inbox", inventoryHash, toAddress, fromAddress, subject, time.time(), 0)
-            elif (
-                treeWidget == self.treeWidgetYourIdentities and
-                self.getCurrentAccount(treeWidget) is None and
-                self.getCurrentFolder(treeWidget) in ("inbox", "new", None)
-            ):
-                ret = self.addMessageListItemInbox(tableWidget, "inbox", inventoryHash, toAddress, fromAddress, subject, time.time(), 0)
+            # elif (
+            #     treeWidget == self.treeWidgetYourIdentities and
+            #     self.getCurrentAccount(treeWidget) is None and
+            #     self.getCurrentFolder(treeWidget) in ("inbox", "new", None)
+            # ):
+            #     ret = self.addMessageListItemInbox(tableWidget, "inbox", inventoryHash, toAddress, fromAddress, subject, time.time(), 0)
         if ret is None:
             acct.parseMessage(toAddress, fromAddress, subject, "")
         else:
@@ -2855,14 +2851,10 @@ class MainWindow(Window):
             self.treeWidgetSubscriptions.mapToGlobal(point))
 
     def widgetConvert(self, widget):
-        # if widget == self.tableWidgetInbox:
-        #     return self.treeWidgetYourIdentities
         if widget == self.tableWidgetInboxSubscriptions:
             return self.treeWidgetSubscriptions
         elif widget == self.tableWidgetInboxChans:
             return self.treeWidgetChans
-        elif widget == self.treeWidgetYourIdentities:
-            return self.messagelistInbox
         elif widget == self.treeWidgetSubscriptions:
             return self.tableWidgetInboxSubscriptions
         elif widget == self.treeWidgetChans:
@@ -2871,26 +2863,17 @@ class MainWindow(Window):
     def getCurrentTreeWidget(self):
         currentIndex = self.tabWidget.currentIndex()
         treeWidgetList = [
-            self.treeWidgetYourIdentities,
-            False,
             self.treeWidgetSubscriptions,
             self.treeWidgetChans
         ]
-        if currentIndex >= 0 and currentIndex < len(treeWidgetList):
+        if currentIndex >= 2 and currentIndex - 2 < len(treeWidgetList):
             return treeWidgetList[currentIndex]
-        else:
-            return False
 
     def getAccountTreeWidget(self, account):
-        try:
-            if account.type == AccountMixin.CHAN:
-                return self.treeWidgetChans
-            elif account.type == AccountMixin.SUBSCRIPTION:
-                return self.treeWidgetSubscriptions
-            else:
-                return self.treeWidgetYourIdentities
-        except:
-            return self.treeWidgetYourIdentities
+        if account.type == AccountMixin.CHAN:
+            return self.treeWidgetChans
+        elif account.type == AccountMixin.SUBSCRIPTION:
+            return self.treeWidgetSubscriptions
 
     def getCurrentMessagelist(self):
         currentIndex = self.tabWidget.currentIndex()
@@ -2900,8 +2883,6 @@ class MainWindow(Window):
         )
         if currentIndex >= 2 and currentIndex - 2 < len(messagelistList):
             return messagelistList[currentIndex - 2]
-        else:
-            return False
 
     def getAccountMessagelist(self, account):
         try:
@@ -2928,15 +2909,11 @@ class MainWindow(Window):
     def getCurrentMessageTextedit(self):
         currentIndex = self.tabWidget.currentIndex()
         messagelistList = [
-            self.textEditInboxMessage,
-            False,
             self.textEditInboxMessageSubscriptions,
             self.textEditInboxMessageChans,
         ]
-        if currentIndex >= 0 and currentIndex < len(messagelistList):
+        if currentIndex >= 2 and currentIndex - 2 < len(messagelistList):
             return messagelistList[currentIndex]
-        else:
-            return False
 
     def getAccountTextedit(self, account):
         try:
@@ -2953,32 +2930,24 @@ class MainWindow(Window):
         if currentIndex is None:
             currentIndex = self.tabWidget.currentIndex()
         messagelistList = [
-            self.inboxSearchLineEdit,
-            False,
             self.inboxSearchLineEditSubscriptions,
             self.inboxSearchLineEditChans,
         ]
-        if currentIndex >= 0 and currentIndex < len(messagelistList):
+        if currentIndex >= 2 and currentIndex - 2 < len(messagelistList):
             if retObj:
                 return messagelistList[currentIndex]
             else:
                 return messagelistList[currentIndex].text().toUtf8().data()
-        else:
-            return None
 
     def getCurrentSearchOption(self, currentIndex=None):
         if currentIndex is None:
             currentIndex = self.tabWidget.currentIndex()
         messagelistList = [
-            self.inboxSearchOption,
-            False,
             self.inboxSearchOptionSubscriptions,
             self.inboxSearchOptionChans,
         ]
-        if currentIndex >= 0 and currentIndex < len(messagelistList):
+        if currentIndex >= 2 and currentIndex - 2 < len(messagelistList):
             return messagelistList[currentIndex].currentText().toUtf8().data()
-        else:
-            return None
 
     # Group of functions for the Your Identities dialog box
     def getCurrentItem(self, treeWidget=None):
@@ -2989,7 +2958,7 @@ class MainWindow(Window):
             if currentItem:
                 return currentItem
         return False
-    
+
     def getCurrentAccount(self, treeWidget=None):
         currentItem = self.getCurrentItem(treeWidget)
         if currentItem:
@@ -3473,11 +3442,11 @@ class MainWindow(Window):
         messageTextedit.setTextColor(QtGui.QColor())
         messageTextedit.setContent(message)
 
-    def messagelistSelect(self, msg):
-        messageTextedit = self.getCurrentMessageTextedit()
-        if not messageTextedit:
-            return
-        messageTextedit.setContent(msg)
+    # def messagelistSelect(self, msg):
+    #     messageTextedit = self.getCurrentMessageTextedit()
+    #     if not messageTextedit:
+    #         return
+    #     messageTextedit.setContent(msg)
 
     def tableWidgetAddressBookItemChanged(self, item):
         if item.type == AccountMixin.CHAN:
