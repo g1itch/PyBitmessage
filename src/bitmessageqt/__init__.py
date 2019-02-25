@@ -731,16 +731,6 @@ class MainWindow(Window):
         tableWidget.horizontalHeaderItem(3).setText(_translate("MainWindow", "Sent", None))
         tableWidget.setUpdatesEnabled(True)
 
-    def switchMessagelist(
-        self, view, account,
-        folder='inbox', search_option=None, search_line=None
-    ):
-        model = view.model()
-        update = {'folder': folder}
-        if account:
-            update['toaddress'] = account
-        model.updateFilter(update)
-
     # Load messages from database file
     def loadMessagelist(self, tableWidget, account, folder="inbox", where="", what="", unreadOnly = False):
         if folder == 'sent':
@@ -2867,7 +2857,7 @@ class MainWindow(Window):
             self.treeWidgetChans
         ]
         if currentIndex >= 2 and currentIndex - 2 < len(treeWidgetList):
-            return treeWidgetList[currentIndex]
+            return treeWidgetList[currentIndex - 2]
 
     def getAccountTreeWidget(self, account):
         if account.type == AccountMixin.CHAN:
@@ -2913,7 +2903,7 @@ class MainWindow(Window):
             self.textEditInboxMessageChans,
         ]
         if currentIndex >= 2 and currentIndex - 2 < len(messagelistList):
-            return messagelistList[currentIndex]
+            return messagelistList[currentIndex - 2]
 
     def getAccountTextedit(self, account):
         try:
@@ -2935,9 +2925,9 @@ class MainWindow(Window):
         ]
         if currentIndex >= 2 and currentIndex - 2 < len(messagelistList):
             if retObj:
-                return messagelistList[currentIndex]
+                return messagelistList[currentIndex - 2]
             else:
-                return messagelistList[currentIndex].text().toUtf8().data()
+                return messagelistList[currentIndex - 2].text().toUtf8().data()
 
     def getCurrentSearchOption(self, currentIndex=None):
         if currentIndex is None:
@@ -2947,7 +2937,7 @@ class MainWindow(Window):
             self.inboxSearchOptionChans,
         ]
         if currentIndex >= 2 and currentIndex - 2 < len(messagelistList):
-            return messagelistList[currentIndex].currentText().toUtf8().data()
+            return messagelistList[currentIndex - 2].currentText().toUtf8().data()
 
     # Group of functions for the Your Identities dialog box
     def getCurrentItem(self, treeWidget=None):
@@ -3348,15 +3338,13 @@ class MainWindow(Window):
         messageTextedit = self.getCurrentMessageTextedit()
         if messageTextedit:
             messageTextedit.setPlainText(QtCore.QString(""))
-        messagelist = self.getCurrentMessagelist() or self.messagelistInbox
+        messagelist = self.getCurrentMessagelist()
+        if not messagelist:
+            return
         # ??
         account = self.getCurrentAccount()
         folder = self.getCurrentFolder()
         treeWidget = self.getCurrentTreeWidget()
-        if isinstance(messagelist, QtGui.QTableView):
-            self.switchMessagelist(
-                messagelist, account, folder, searchOption, searchLine)
-            return
         # refresh count indicator
         self.propagateUnreadCount(account.address if hasattr(account, 'address') else None, folder, treeWidget, 0)
         self.loadMessagelist(messagelist, account, folder, searchOption, searchLine)
@@ -3441,12 +3429,6 @@ class MainWindow(Window):
         messageTextedit.setCurrentFont(QtGui.QFont())
         messageTextedit.setTextColor(QtGui.QColor())
         messageTextedit.setContent(message)
-
-    # def messagelistSelect(self, msg):
-    #     messageTextedit = self.getCurrentMessageTextedit()
-    #     if not messageTextedit:
-    #         return
-    #     messageTextedit.setContent(msg)
 
     def tableWidgetAddressBookItemChanged(self, item):
         if item.type == AccountMixin.CHAN:

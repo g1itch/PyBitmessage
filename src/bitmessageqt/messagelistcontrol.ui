@@ -60,7 +60,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="buttonNew">
+        <widget class="QPushButton" name="buttonAdd">
          <property name="maximumSize">
           <size>
            <width>200</width>
@@ -68,7 +68,7 @@
           </size>
          </property>
          <property name="text">
-          <string notr="true">New</string>
+          <string notr="true">Add</string>
          </property>
         </widget>
        </item>
@@ -119,9 +119,6 @@
        </layout>
       </widget>
       <widget class="InboxMessagelist" name="messagelistInbox">
-       <property name="contextMenuPolicy">
-        <enum>Qt::CustomContextMenu</enum>
-       </property>
        <property name="editTriggers">
         <set>QAbstractItemView::NoEditTriggers</set>
        </property>
@@ -153,7 +150,7 @@
         <number>27</number>
        </attribute>
        <attribute name="horizontalHeaderShowSortIndicator" stdset="0">
-        <bool>false</bool>
+        <bool>true</bool>
        </attribute>
        <attribute name="horizontalHeaderStretchLastSection">
         <bool>true</bool>
@@ -188,6 +185,74 @@
     </widget>
    </item>
   </layout>
+  <widget class="QToolBar" name="inboxContextMenuToolbar">
+   <attribute name="visibility">
+    <bool>false</bool>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+   <action name="actionReply">
+    <property name="text">
+     <string>Reply to sender</string>
+    </property>
+   </action>
+   <action name="actionReplyChan">
+    <property name="text">
+     <string>Reply to channel</string>
+    </property>
+   </action>
+   <action name="actionAddSenderToAddressbook">
+    <property name="text">
+     <string>Add sender to your Addressbook</string>
+    </property>
+   </action>
+   <action name="actionAddSenderToBlacklist">
+    <property name="text">
+     <string>Add sender to your Blacklist</string>
+    </property>
+   </action>
+   <action name="actionTrash">
+    <property name="text">
+     <string>Move to Trash</string>
+    </property>
+   </action>
+   <action name="actionTrashUndelete">
+    <property name="text">
+     <string>Undelete</string>
+    </property>
+   </action>
+   <action name="actionForceHtml">
+    <property name="text">
+     <string>View HTML code as formatted text</string>
+    </property>
+   </action>
+   <action name="actionSaveMessageAs">
+    <property name="text">
+     <string>Save message as...</string>
+    </property>
+   </action>
+   <action name="actionMarkUnread">
+    <property name="text">
+     <string>Mark Unread</string>
+    </property>
+   </action>
+   <action name="actionClipboard">
+    <property name="text">
+     <string notr="true">Copy to clipboard</string>
+    </property>
+   </action>
+   <addaction name="actionReply"/>
+   <addaction name="actionReplyChan"/>
+   <addaction name="actionAddSenderToAddressbook"/>
+   <addaction name="actionAddSenderToBlacklist"/>
+   <addaction name="actionTrash"/>
+   <addaction name="actionTrashUndelete"/>
+   <addaction name="actionForceHtml"/>
+   <addaction name="actionSaveMessageAs"/>
+   <addaction name="actionMarkUnread"/>
+   <addaction name="actionClipboard"/>
+  </widget>
  </widget>
  <customwidgets>
   <customwidget>
@@ -221,85 +286,29 @@
   <include location="bitmessage_icons.qrc"/>
  </resources>
  <connections>
-  <!--  <connection> -->
-  <!--  <sender>messagelistInbox</sender> -->
-  <!--  <signal>customContextMenuRequested(QPoint)</signal> -->
-  <!--  <receiver>MainWindow</receiver> -->
-  <!--  <slot>on_context_menuInbox()</slot> -->
-  <!--  <hints> -->
-  <!--   <hint type="sourcelabel"> -->
-  <!--    <x>656</x> -->
-  <!--    <y>366</y> -->
-  <!--   </hint> -->
-  <!--   <hint type="destinationlabel"> -->
-  <!--    <x>442</x> -->
-  <!--    <y>289</y> -->
-  <!--   </hint> -->
-  <!--  </hints> -->
-  <!-- </connection> -->
-  <!-- <connection> -->
-  <!--  <sender>pushButtonNewAddress</sender> -->
-  <!--  <signal>clicked()</signal> -->
-  <!--  <receiver>MainWindow</receiver> -->
-  <!--  <slot>click_NewAddressDialog</slot> -->
-  <!--  <hints> -->
-  <!--   <hint type="sourcelabel"> -->
-  <!--    <x>20</x> -->
-  <!--    <y>20</y> -->
-  <!--   </hint> -->
-  <!--   <hint type="destinationlabel"> -->
-  <!--    <x>20</x> -->
-  <!--    <y>20</y> -->
-  <!--   </hint> -->
-  <!--  </hints> -->
-  <!-- </connection> -->
+  <connection>
+   <sender>buttonAdd</sender>
+   <signal>clicked()</signal>
+   <receiver>treeWidget</receiver>
+   <slot>add</slot>
+  </connection>
   <!-- <connection> -->
   <!--  <sender>treeWidgetYourIdentities</sender> -->
   <!--  <signal>customContextMenuRequested(QPoint)</signal> -->
   <!--  <receiver>MainWindow</receiver> -->
   <!--  <slot>on_context_menuYourIdentities()</slot> -->
-  <!--  <hints> -->
-  <!--   <hint type="sourcelabel"> -->
-  <!--    <x>20</x> -->
-  <!--    <y>20</y> -->
-  <!--   </hint> -->
-  <!--   <hint type="destinationlabel"> -->
-  <!--    <x>20</x> -->
-  <!--    <y>20</y> -->
-  <!--   </hint> -->
-  <!--  </hints> -->
   <!-- </connection> -->
   <!-- <connection> -->
   <!--  <sender>inboxSearchLineEdit</sender> -->
   <!--  <signal>returnPressed()</signal> -->
   <!--  <receiver>MainWindow</receiver> -->
   <!--  <slot>inboxSearchLineEditReturnPressed</slot> -->
-  <!--  <hints> -->
-  <!--   <hint type="sourcelabel"> -->
-  <!--    <x>20</x> -->
-  <!--    <y>20</y> -->
-  <!--   </hint> -->
-  <!--   <hint type="destinationlabel"> -->
-  <!--    <x>20</x> -->
-  <!--    <y>20</y> -->
-  <!--   </hint> -->
-  <!--  </hints> -->
   <!-- </connection> -->
   <!-- <connection> -->
   <!--  <sender>inboxSearchLineEdit</sender> -->
   <!--  <signal>textChanged(QString)</signal> -->
   <!--  <receiver>MainWindow</receiver> -->
   <!--  <slot>inboxSearchLineEditUpdated</slot> -->
-  <!--  <hints> -->
-  <!--   <hint type="sourcelabel"> -->
-  <!--    <x>20</x> -->
-  <!--    <y>20</y> -->
-  <!--   </hint> -->
-  <!--   <hint type="destinationlabel"> -->
-  <!--    <x>20</x> -->
-  <!--    <y>20</y> -->
-  <!--   </hint> -->
-  <!--  </hints> -->
   <!-- </connection> -->
   <connection>
    <sender>treeWidget</sender>
@@ -307,22 +316,6 @@
    <receiver>messagelistInbox</receiver>
    <slot>folderChanged</slot>
   </connection>
-  <!-- <connection> -->
-  <!--  <sender>treeWidgetYourIdentities</sender> -->
-  <!--  <signal>itemChanged(QTreeWidgetItem*,int)</signal> -->
-  <!--  <receiver>MainWindow</receiver> -->
-  <!--  <slot>treeWidgetItemChanged</slot> -->
-  <!--  <hints> -->
-  <!--   <hint type="sourcelabel"> -->
-  <!--    <x>20</x> -->
-  <!--    <y>20</y> -->
-  <!--   </hint> -->
-  <!--   <hint type="destinationlabel"> -->
-  <!--    <x>20</x> -->
-  <!--    <y>20</y> -->
-  <!--   </hint> -->
-  <!--  </hints> -->
-  <!-- </connection> -->
   <connection>
    <sender>messagelistInbox</sender>
    <signal>messageSelected(QString)</signal>
@@ -338,6 +331,66 @@
      <y>20</y>
     </hint>
    </hints>
+  </connection>
+  <connection>
+   <sender>actionReply</sender>
+   <signal>triggered()</signal>
+   <receiver>messagelistInbox</receiver>
+   <slot>on_actionReply</slot>
+  </connection>
+  <connection>
+   <sender>actionReplyChan</sender>
+   <signal>triggered()</signal>
+   <receiver>messagelistInbox</receiver>
+   <slot>on_actionReplyChan</slot>
+  </connection>
+  <connection>
+   <sender>actionAddSenderToAddressbook</sender>
+   <signal>triggered()</signal>
+   <receiver>messagelistInbox</receiver>
+   <slot>on_actionAddSenderToAddressbook</slot>
+  </connection>
+  <connection>
+   <sender>actionAddSenderToBlacklist</sender>
+   <signal>triggered()</signal>
+   <receiver>messagelistInbox</receiver>
+   <slot>on_actionAddSenderToBlacklist</slot>
+  </connection>
+  <connection>
+   <sender>actionTrash</sender>
+   <signal>triggered()</signal>
+   <receiver>messagelistInbox</receiver>
+   <slot>on_actionTrash</slot>
+  </connection>
+  <connection>
+   <sender>actionTrashUndelete</sender>
+   <signal>triggered()</signal>
+   <receiver>messagelistInbox</receiver>
+   <slot>on_actionTrashUndelete</slot>
+  </connection>
+  <connection>
+   <sender>actionForceHtml</sender>
+   <signal>triggered()</signal>
+   <receiver>messagelistInbox</receiver>
+   <slot>on_actionForceHtml</slot>
+  </connection>
+  <connection>
+   <sender>actionSaveMessageAs</sender>
+   <signal>triggered()</signal>
+   <receiver>messagelistInbox</receiver>
+   <slot>on_actionSaveMessageAs</slot>
+  </connection>
+  <connection>
+   <sender>actionMarkUnread</sender>
+   <signal>triggered()</signal>
+   <receiver>messagelistInbox</receiver>
+   <slot>on_actionMarkUnread</slot>
+  </connection>
+  <connection>
+   <sender>actionClipboard</sender>
+   <signal>triggered()</signal>
+   <receiver>messagelistInbox</receiver>
+   <slot>on_actionClipboard</slot>
   </connection>
  </connections>
 </ui>

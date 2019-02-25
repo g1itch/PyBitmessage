@@ -41,7 +41,6 @@ class Window(settingsmixin.SMainWindow):
 
         # Hide all menu action containers
         for toolbar in (
-            self.inboxContextMenuToolbar,
             self.addressContextMenuToolbarYourIdentities,
             self.addressContextMenuToolbar,
             self.addressBookContextMenuToolbar,

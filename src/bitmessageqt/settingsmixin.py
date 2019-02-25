@@ -10,6 +10,14 @@ from PyQt4 import QtCore, QtGui
 
 class SettingsMixin(object):
     """Mixin for adding geometry and state saving between restarts."""
+    # def __init__(self, *args):
+    #     super(SettingsMixin, self).__init__(*args)
+    #     self.loadSettings()
+
+    # def __del__(self):
+    #     self.saveSettings()
+    #     super(SettingsMixin, self).__del__()
+
     def warnIfNoObjectName(self):
         """
         Handle objects which don't have a name. Currently it ignores them. Objects without a name can't have their
@@ -70,6 +78,18 @@ class SMainWindow(QtGui.QMainWindow, SettingsMixin):
 
 
 class STableWidget(QtGui.QTableWidget, SettingsMixin):
+    """Table widget with Settings functionality"""
+    # pylint: disable=too-many-ancestors
+    def loadSettings(self):
+        """Load table settings."""
+        self.readState(self.horizontalHeader())
+
+    def saveSettings(self):
+        """Save table settings."""
+        self.writeState(self.horizontalHeader())
+
+
+class STableView(QtGui.QTableView, SettingsMixin):
     """Table widget with Settings functionality"""
     # pylint: disable=too-many-ancestors
     def loadSettings(self):
