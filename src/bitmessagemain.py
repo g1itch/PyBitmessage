@@ -32,7 +32,7 @@ import traceback
 from struct import pack
 
 from helper_startup import (
-    isOurOperatingSystemLimitedToHavingVeryFewHalfOpenConnections
+    isOurOperatingSystemLimitedToHavingVeryFewHalfOpenConnections, loadConfig
 )
 from singleinstance import singleinstance
 
@@ -160,6 +160,8 @@ def signal_handler(signum, frame):
         'Got signal %i in %s/%s',
         signum, process.name, thread.name
     )
+    if signum == signal.SIGHUP:
+        return loadConfig()
     if process.name == "RegExParser":
         # on Windows this isn't triggered, but it's fine,
         # it has its own process termination thing
