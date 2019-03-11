@@ -11,6 +11,8 @@ import unittest
 
 import psutil
 
+from pybitmessage.bmconfigparser import BMConfigParser
+
 
 def put_signal_file(path, filename):
     """Creates file, presence of which is a signal about some event."""
@@ -28,12 +30,28 @@ class TestProcessProto(unittest.TestCase):
         'keys.dat', 'debug.log', 'messages.dat', 'knownnodes.dat',
         '.api_started', 'unittest.lock'
     )
+    _settings = None
 
     @classmethod
     def setUpClass(cls):
         """Setup environment and start pybitmessage"""
         cls.home = os.environ['BITMESSAGE_HOME'] = tempfile.gettempdir()
         put_signal_file(cls.home, 'unittest.lock')
+        cls._start_process()
+        # let pybitmessage generate default config
+        # and update it with settings configured for test case if any
+        if cls._settings:
+            cls._stop_process(10)
+            config = BMConfigParser()
+            config.read(os.path.join(cls.home, 'keys.dat'))
+            cls._cleanup_files()
+            for setting in cls._settings.iteritems():
+                config.set('bitmessagesettings', *setting)
+            config.save()
+            cls._start_process()
+
+    @classmethod
+    def _start_process(cls):
         subprocess.call(cls._process_cmd)  # nosec
         time.sleep(5)
         cls.pid = int(cls._get_readline('singleton.lock'))

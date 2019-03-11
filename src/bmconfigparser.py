@@ -7,7 +7,6 @@ import shutil
 import os
 from datetime import datetime
 
-import state
 from singleton import Singleton
 
 BMConfigDefaults = {
@@ -99,7 +98,10 @@ class BMConfigParser(ConfigParser.SafeConfigParser):
             lambda x: x.startswith('BM-'), BMConfigParser().sections())
 
     def read(self, filenames):
+        """Read config from file or list of files"""
         ConfigParser.ConfigParser.read(self, filenames)
+        if isinstance(filenames, str):
+            self._src = filenames
         for section in self.sections():
             for option in self.options(section):
                 try:
@@ -116,14 +118,16 @@ class BMConfigParser(ConfigParser.SafeConfigParser):
                 except ConfigParser.InterpolationError:
                     continue
 
-    def save(self):
-        fileName = os.path.join(state.appdata, 'keys.dat')
-        fileNameBak = '.'.join([
-            fileName, datetime.now().strftime("%Y%j%H%M%S%f"), 'bak'])
+    def save(self, filename=None):
+        """Save config to filename or to file from which it was read"""
+        if not filename:
+            filename = self._src
+        filename_bak = '.'.join([
+            filename, datetime.now().strftime("%Y%j%H%M%S%f"), 'bak'])
         # create a backup copy to prevent the accidental loss due to
         # the disk write failure
         try:
-            shutil.copyfile(fileName, fileNameBak)
+            shutil.copyfile(filename, filename_bak)
             # The backup succeeded.
             fileNameExisted = True
         except (IOError, Exception):
@@ -131,11 +135,11 @@ class BMConfigParser(ConfigParser.SafeConfigParser):
             # didn't exist before.
             fileNameExisted = False
         # write the file
-        with open(fileName, 'wb') as configfile:
+        with open(filename, 'wb') as configfile:
             self.write(configfile)
         # delete the backup
         if fileNameExisted:
-            os.remove(fileNameBak)
+            os.remove(filename_bak)
 
     def validate(self, section, option, value):
         try:
