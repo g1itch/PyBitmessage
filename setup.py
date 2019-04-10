@@ -16,6 +16,7 @@ EXTRAS_REQUIRE = {
     'prctl': ['python_prctl'],  # Named threads
     'qrcode': ['qrcode'],
     'sound;platform_system=="Windows"': ['winsound'],
+    'tor': ['stem'],
     'docs': [
         'sphinx',  # fab build_docs
         'graphviz',  # fab build_docs
@@ -129,6 +130,9 @@ if __name__ == "__main__":
         ext_modules=[bitmsghash],
         zip_safe=False,
         entry_points={
+            'bitmessage.nodes.validator': [
+                'onion = pybitmessage.plugins.validator_onion [tor]'
+            ],
             'bitmessage.gui.menu': [
                 'address.qrcode = pybitmessage.plugins.menu_qrcode [qrcode]'
             ],
