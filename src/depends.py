@@ -4,6 +4,7 @@ and suggest how it may be installed
 """
 
 # flake8: noqa:E402
+# pylint: disable=relative-import
 
 import sys
 
@@ -18,7 +19,7 @@ if not hasattr(sys, 'hexversion') or sys.hexversion < 0x20300F0:
 
 import logging
 import os
-from distutils import version
+from distutils import version  # noqa:E402
 from importlib import import_module
 
 # We can now use logging so set up a simple configuration
@@ -171,7 +172,7 @@ def try_import(module, log_extra=False):
 def check_ripemd160():
     """Check availability of the RIPEMD160 hash function"""
     try:
-        from fallback import RIPEMD160Hash  # pylint: disable=relative-import
+        from fallback import RIPEMD160Hash
     except ImportError:
         return False
     return RIPEMD160Hash is not None
