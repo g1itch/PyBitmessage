@@ -534,8 +534,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
 
     @staticmethod
     def stopDownloadingObject(hashId, forwardAnyway=False):
-        for connection in network.connectionpool.BMConnectionPool().inboundConnections.values() + \
-                network.connectionpool.BMConnectionPool().outboundConnections.values():
+        for connection in network.connectionpool.BMConnectionPool().connections():
             try:
                 del connection.objectsNewToMe[hashId]
             except KeyError:

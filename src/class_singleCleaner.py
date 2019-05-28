@@ -144,9 +144,7 @@ class singleCleaner(threading.Thread, StoppableThread):
 #                    thread.downloadQueue.clear()
 
             # inv/object tracking
-            for connection in \
-                    BMConnectionPool().inboundConnections.values() + \
-                    BMConnectionPool().outboundConnections.values():
+            for connection in BMConnectionPool().connections():
                 connection.clean()
 
             # discovery tracking

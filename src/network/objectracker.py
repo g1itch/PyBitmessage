@@ -85,7 +85,7 @@ class ObjectTracker(object):
         self.objectsNewToMe[hashId] = True
 
     def handleReceivedObject(self, streamNumber, hashid):
-        for i in network.connectionpool.BMConnectionPool().inboundConnections.values() + network.connectionpool.BMConnectionPool().outboundConnections.values():
+        for i in network.connectionpool.BMConnectionPool().connections():
             if not i.fullyEstablished:
                 continue
             try:

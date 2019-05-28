@@ -11,10 +11,10 @@ lastSentTimestamp = time.time()
 lastSentBytes = 0
 currentSentSpeed = 0
 
+
 def connectedHostsList():
     retval = []
-    for i in BMConnectionPool().inboundConnections.values() + \
-            BMConnectionPool().outboundConnections.values():
+    for i in BMConnectionPool().connections():
         if not i.fullyEstablished:
             continue
         try:

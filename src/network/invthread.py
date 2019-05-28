@@ -18,9 +18,7 @@ def handleExpiredDandelion(expired):
        the object"""
     if not expired:
         return
-    for i in \
-        BMConnectionPool().inboundConnections.values() + \
-            BMConnectionPool().outboundConnections.values():
+    for i in BMConnectionPool().connections():
         if not i.fullyEstablished:
             continue
         for x in expired:
@@ -41,11 +39,8 @@ class InvThread(threading.Thread, StoppableThread):
 
     def handleLocallyGenerated(self, stream, hashId):
         Dandelion().addHash(hashId, stream=stream)
-        for connection in \
-                BMConnectionPool().inboundConnections.values() + \
-                BMConnectionPool().outboundConnections.values():
-                if state.dandelion and connection != Dandelion().objectChildStem(hashId):
-                    continue
+        for connection in BMConnectionPool().connections():
+            if not state.dandelion or connection == Dandelion().objectChildStem(hashId):
                 connection.objectsNewToThem[hashId] = time()
 
     def run(self):
@@ -64,8 +59,7 @@ class InvThread(threading.Thread, StoppableThread):
                     break
 
             if chunk:
-                for connection in BMConnectionPool().inboundConnections.values() + \
-                        BMConnectionPool().outboundConnections.values():
+                for connection in BMConnectionPool().connections():
                     fluffs = []
                     stems = []
                     for inv in chunk:

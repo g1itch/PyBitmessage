@@ -30,12 +30,7 @@ class BMNetworkThread(threading.Thread, StoppableThread):
                 i.close()
             except:
                 pass
-        for i in BMConnectionPool().outboundConnections.values():
-            try:
-                i.close()
-            except:
-                pass
-        for i in BMConnectionPool().inboundConnections.values():
+        for i in BMConnectionPool().connections():
             try:
                 i.close()
             except:

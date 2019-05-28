@@ -35,6 +35,12 @@ class BMConnectionPool(object):
         self.spawnWait = 2 
         self.bootstrapped = False
 
+    def connections(self):
+        for i in self.inboundConnections.itervalues():
+            yield i
+        for i in self.outboundConnections.itervalues():
+            yield i
+
     def connectToStream(self, streamNumber):
         self.streams.append(streamNumber)
 
@@ -56,7 +62,7 @@ class BMConnectionPool(object):
         raise KeyError
 
     def isAlreadyConnected(self, nodeid):
-        for i in self.inboundConnections.values() + self.outboundConnections.values():
+        for i in self.connections():
             try:
                 if nodeid == i.nodeid:
                     return True
@@ -198,10 +204,7 @@ class BMConnectionPool(object):
 
                     self.lastSpawned = time.time()
         else:
-            for i in (
-                    self.inboundConnections.values() +
-                    self.outboundConnections.values()
-            ):
+            for i in self.connections():
                 # FIXME: rating will be increased after next connection
                 i.handle_close()
 
@@ -239,7 +242,7 @@ class BMConnectionPool(object):
         asyncore.loop(timeout=loopTime, count=1000)
 
         reaper = []
-        for i in self.inboundConnections.values() + self.outboundConnections.values():
+        for i in self.connections():
             minTx = time.time() - 20
             if i.fullyEstablished:
                 minTx -= 300 - 20
