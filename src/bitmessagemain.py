@@ -219,12 +219,12 @@ class Main:
                 state.last_api_response = time.time()
                 # Apply special settings
                 config = BMConfigParser()
-                config.set(
-                    'bitmessagesettings', 'apienabled', 'true')
-                config.set(
-                    'bitmessagesettings', 'apiusername', 'username')
-                config.set(
-                    'bitmessagesettings', 'apipassword', 'password')
+                # config.set(
+                #     'bitmessagesettings', 'apienabled', 'true')
+                # config.set(
+                #     'bitmessagesettings', 'apiusername', 'username')
+                # config.set(
+                #     'bitmessagesettings', 'apipassword', 'password')
                 config.set(
                     'bitmessagesettings', 'apinotifypath',
                     os.path.join(app_dir, 'tests', 'apinotify_handler.py')
