@@ -48,6 +48,7 @@ class TestProcessProto(unittest.TestCase):
             for setting in cls._settings.iteritems():
                 config.set('bitmessagesettings', *setting)
             config.save()
+            put_signal_file(cls.home, 'unittest.lock')
             cls._start_process()
 
     @classmethod
