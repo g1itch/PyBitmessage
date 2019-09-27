@@ -26,7 +26,6 @@ from version import softwareVersion
 
 import defaults
 import helper_db
-import helper_inbox
 import network.stats
 import proofofwork
 import queues
@@ -925,9 +924,9 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         msgid = self._decode(params[0], "hex")
 
         # Trash if in inbox table
-        helper_inbox.trash(msgid)
+        helper_db.put_trash(msgid)
         # Trash if in sent table
-        sqlExecute('''UPDATE sent SET folder='trash' WHERE msgid=?''', msgid)
+        helper_db.put_trash(msgid, sent=True)
         return 'Trashed message (assuming message existed).'
 
     def HandleTrashInboxMessage(self, params):
@@ -936,7 +935,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         if not params:
             raise APIError(0, 'I need parameters!')
         msgid = self._decode(params[0], "hex")
-        helper_inbox.trash(msgid)
+        helper_db.put_trash(msgid)
         return 'Trashed inbox message (assuming message existed).'
 
     def HandleTrashSentMessage(self, params):
@@ -945,7 +944,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         if not params:
             raise APIError(0, 'I need parameters!')
         msgid = self._decode(params[0], "hex")
-        sqlExecute('''UPDATE sent SET folder='trash' WHERE msgid=?''', msgid)
+        helper_db.put_trash(msgid, sent=True)
         return 'Trashed sent message (assuming message existed).'
 
     def HandleSendMessage(self, params):
