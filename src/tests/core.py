@@ -201,9 +201,12 @@ class TestCore(unittest.TestCase):
 
 def run(prog):
     """Starts all tests defined in this module"""
+    import sql
     global program  # pylint: disable=global-statement
     program = prog
     loader = unittest.TestLoader()
     loader.sortTestMethodsUsing = None
     suite = loader.loadTestsFromTestCase(TestCore)
+    sql_tests = loader.loadTestsFromModule(sql)
+    suite.addTest(sql_tests)
     return unittest.TextTestRunner(verbosity=2).run(suite)
