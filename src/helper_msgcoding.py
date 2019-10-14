@@ -5,17 +5,11 @@ Message encoding end decoding functions
 import string
 import zlib
 
-try:
-    import msgpack
-except ImportError:
-    try:
-        import umsgpack as msgpack
-    except ImportError:
-        import fallback.umsgpack.umsgpack as msgpack
 
 import messagetypes
 from bmconfigparser import BMConfigParser
 from debug import logger
+from fallback import msgpack
 from tr import _translate
 
 BITMESSAGE_ENCODING_IGNORE = 0

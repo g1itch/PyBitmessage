@@ -24,3 +24,11 @@ else:
         if data:
             hasher.update(data)
         return hasher
+
+try:
+    import msgpack
+except ImportError:
+    import umsgpack as msgpack
+
+
+__all__ = ['RIPEMD160Hash', 'msgpack']

@@ -1,0 +1,4 @@
+[submodule "src/fallback/umsgpack"]
+	path = src/fallback/umsgpack
+	url = https://github.com/vsergeev/u-msgpack-python.git
+	branch = tag/v2.5.2
