@@ -42,12 +42,10 @@ from account import (
 import dialogs
 from network.stats import pendingDownload, pendingUpload
 from uisignaler import UISignaler
-import paths
 from proofofwork import getPowType
 import queues
 import shutdown
 import state
-from statusbar import BMStatusBar
 import sound
 # This is needed for tray icon
 import bitmessage_icons_rc  # noqa:F401 pylint: disable=unused-import
@@ -298,7 +296,6 @@ class MainWindow(Window):
     def __init__(self, parent=None):
         super(MainWindow, self).__init__(parent)
 
-        self.qmytranslator = self.qsystranslator = None
         self.indicatorUpdate = None
         self.actionStatus = None
 
@@ -1242,8 +1239,8 @@ class MainWindow(Window):
 
     def changeEvent(self, event):
         if event.type() == QtCore.QEvent.LanguageChange:
-            self.retranslateUi(self)
-            self.init_inbox_popup_menu(False)
+            # FIXME: it's called very often
+            self.retranslateUi()
             self.init_identities_popup_menu(False)
             self.blackwhitelist.init_blacklist_popup_menu()
         if event.type() == QtCore.QEvent.WindowStateChange:

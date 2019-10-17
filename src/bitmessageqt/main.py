@@ -1,8 +1,14 @@
+import locale
+import os
+import sys
 from PyQt4 import QtCore, QtGui
 
+import l10n
+import paths
 import settingsmixin
 import widgets
 from bmconfigparser import BMConfigParser
+from debug import logger
 from foldertree import AddressBookCompleter
 from tr import _translate
 
@@ -14,6 +20,7 @@ class Window(settingsmixin.SMainWindow):
         super(Window, self).__init__(parent)
         widgets.load('main.ui', self)
 
+        self.qmytranslator = self.qsystranslator = None
         self.blackwhitelist.rerenderBlackWhiteList()
 
         addressBookCompleter = AddressBookCompleter()
