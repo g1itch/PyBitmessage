@@ -4,6 +4,7 @@ PyQt based UI for bitmessage, the main module
 
 import hashlib
 import locale
+import logging
 import os
 import random
 import string
@@ -19,12 +20,9 @@ from PyQt4 import QtCore, QtGui
 from PyQt4.QtNetwork import QLocalSocket, QLocalServer
 
 import shared
-import state
-from debug import logger
 from tr import _translate
 from addresses import decodeAddress, addBMIfNotPresent
 from bitmessageui import Ui_MainWindow
-from bmconfigparser import BMConfigParser
 import namecoin
 from messageview import MessageView
 from migrationwizard import Ui_MigrationWizard
@@ -48,8 +46,6 @@ from network.stats import pendingDownload, pendingUpload
 from uisignaler import UISignaler
 import paths
 from proofofwork import getPowType
-import queues
-import shutdown
 from statusbar import BMStatusBar
 import sound
 # This is needed for tray icon
@@ -61,11 +57,13 @@ try:
 except ImportError:
     get_plugins = False
 
+logger = logging.getLogger('default')
+
 
 # TODO: rewrite
 def powQueueSize():
     """Returns the size of queues.workerQueue including current unfinished work"""
-    queue_len = queues.workerQueue.qsize()
+    queue_len = app.core.queues.workerQueue.qsize()
     for thread in threading.enumerate():
         try:
             if thread.name == "singleWorker":
@@ -75,9 +73,8 @@ def powQueueSize():
     return queue_len
 
 
-def openKeysFile():
-    """Open keys file with an external editor"""
-    keysfile = os.path.join(state.appdata, 'keys.dat')
+def openKeysFile(keysfile):
+    """Open keys *keysfile* with an external editor"""
     if 'linux' in sys.platform:
         subprocess.call(["xdg-open", keysfile])
     elif sys.platform.startswith('win'):
@@ -514,11 +511,11 @@ class MyForm(settingsmixin.SMainWindow):
         enabled = {}
 
         for toAddress in getSortedAccounts():
-            isEnabled = BMConfigParser().getboolean(
+            isEnabled = app.core.config.getboolean(
                 toAddress, 'enabled')
-            isChan = BMConfigParser().safeGetBoolean(
+            isChan = app.core.config.safeGetBoolean(
                 toAddress, 'chan')
-            isMaillinglist = BMConfigParser().safeGetBoolean(
+            isMaillinglist = app.core.config.safeGetBoolean(
                 toAddress, 'mailinglist')
 
             if treeWidget == self.ui.treeWidgetYourIdentities:
@@ -637,8 +634,8 @@ class MyForm(settingsmixin.SMainWindow):
                 reply = QtGui.QMessageBox.question(
                     self, 'Message', displayMsg, QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
                 if reply == QtGui.QMessageBox.Yes:
-                    BMConfigParser().remove_section(addressInKeysFile)
-                    BMConfigParser().save()
+                    app.core.config.remove_section(addressInKeysFile)
+                    app.core.config.save()
 
         self.updateStartOnLogon()
 
@@ -810,7 +807,7 @@ class MyForm(settingsmixin.SMainWindow):
         self.rerenderComboBoxSendFromBroadcast()
 
         # Put the TTL slider in the correct spot
-        TTL = BMConfigParser().getint('bitmessagesettings', 'ttl')
+        TTL = app.core.config.getint('bitmessagesettings', 'ttl')
         if TTL < 3600: # an hour
             TTL = 3600
         elif TTL > 28*24*60*60: # 28 days
@@ -829,7 +826,7 @@ class MyForm(settingsmixin.SMainWindow):
 
         self.ui.updateNetworkSwitchMenuLabel()
 
-        self._firstrun = BMConfigParser().safeGetBoolean(
+        self._firstrun = app.core.config.safeGetBoolean(
             'bitmessagesettings', 'dontconnect')
 
         self._contact_selected = None
@@ -854,7 +851,7 @@ class MyForm(settingsmixin.SMainWindow):
             # In case the user moves the program and the registry entry is
             # no longer valid, this will delete the old registry entry.
             self.settings.remove("PyBitmessage")
-            if BMConfigParser().getboolean(
+            if app.core.config.getboolean(
                     'bitmessagesettings', 'startonlogon'
             ):
                 self.settings.setValue("PyBitmessage", sys.argv[0])
@@ -868,8 +865,8 @@ class MyForm(settingsmixin.SMainWindow):
     def updateTTL(self, sliderPosition):
         TTL = int(sliderPosition ** 3.199 + 3600)
         self.updateHumanFriendlyTTLDescription(TTL)
-        BMConfigParser().set('bitmessagesettings', 'ttl', str(TTL))
-        BMConfigParser().save()
+        app.core.config.set('bitmessagesettings', 'ttl', str(TTL))
+        app.core.config.save()
 
     def updateHumanFriendlyTTLDescription(self, TTL):
         numberOfHours = int(round(TTL / (60*60)))
@@ -920,7 +917,7 @@ class MyForm(settingsmixin.SMainWindow):
             self.appIndicatorShowOrHideWindow()
 
     def appIndicatorSwitchQuietMode(self):
-        BMConfigParser().set(
+        app.core.config.set(
             'bitmessagesettings', 'showtraynotifications',
             str(not self.actionQuiet.isChecked())
         )
@@ -1291,7 +1288,7 @@ class MyForm(settingsmixin.SMainWindow):
         # show bitmessage
         self.actionShow = QtGui.QAction(_translate(
             "MainWindow", "Show Bitmessage"), m, checkable=True)
-        self.actionShow.setChecked(not BMConfigParser().getboolean(
+        self.actionShow.setChecked(not app.core.config.getboolean(
             'bitmessagesettings', 'startintray'))
         self.actionShow.triggered.connect(self.appIndicatorShowOrHideWindow)
         if not sys.platform[0:3] == 'win':
@@ -1300,7 +1297,7 @@ class MyForm(settingsmixin.SMainWindow):
         # quiet mode
         self.actionQuiet = QtGui.QAction(_translate(
             "MainWindow", "Quiet Mode"), m, checkable=True)
-        self.actionQuiet.setChecked(not BMConfigParser().getboolean(
+        self.actionQuiet.setChecked(not app.core.config.getboolean(
             'bitmessagesettings', 'showtraynotifications'))
         self.actionQuiet.triggered.connect(self.appIndicatorSwitchQuietMode)
         m.addAction(self.actionQuiet)
@@ -1364,7 +1361,7 @@ class MyForm(settingsmixin.SMainWindow):
         # if the address had a known label in the address book
         if label:
             # Does a sound file exist for this particular contact?
-            soundFilename = state.appdata + 'sounds/' + label
+            soundFilename = app.core.state.appdata + 'sounds/' + label
             ext = _choose_ext(soundFilename)
             if not ext:
                 category = sound.SOUND_KNOWN
@@ -1383,19 +1380,19 @@ class MyForm(settingsmixin.SMainWindow):
 
             # the sound is for an address which exists in the address book
             if category is sound.SOUND_KNOWN:
-                soundFilename = state.appdata + 'sounds/known'
+                soundFilename = app.core.state.appdata + 'sounds/known'
             # the sound is for an unknown address
             elif category is sound.SOUND_UNKNOWN:
-                soundFilename = state.appdata + 'sounds/unknown'
+                soundFilename = app.core.state.appdata + 'sounds/unknown'
             # initial connection sound
             elif category is sound.SOUND_CONNECTED:
-                soundFilename = state.appdata + 'sounds/connected'
+                soundFilename = app.core.state.appdata + 'sounds/connected'
             # disconnected sound
             elif category is sound.SOUND_DISCONNECTED:
-                soundFilename = state.appdata + 'sounds/disconnected'
+                soundFilename = app.core.state.appdata + 'sounds/disconnected'
             # sound when the connection status becomes green
             elif category is sound.SOUND_CONNECTION_GREEN:
-                soundFilename = state.appdata + 'sounds/green'
+                soundFilename = app.core.state.appdata + 'sounds/green'
 
         if soundFilename is None:
             logger.warning("Probably wrong category number in playSound()")
@@ -1549,7 +1546,7 @@ class MyForm(settingsmixin.SMainWindow):
     # menu button 'manage keys'
     def click_actionManageKeys(self):
         if 'darwin' in sys.platform or 'linux' in sys.platform:
-            if state.appdata == '':
+            if app.core.state.appdata == '':
                 # reply = QtGui.QMessageBox.information(self, 'keys.dat?','You
                 # may manage your keys by editing the keys.dat file stored in
                 # the same directory as this program. It is important that you
@@ -1559,16 +1556,16 @@ class MyForm(settingsmixin.SMainWindow):
 
             else:
                 QtGui.QMessageBox.information(self, 'keys.dat?', _translate(
-                    "MainWindow", "You may manage your keys by editing the keys.dat file stored in\n %1 \nIt is important that you back up this file.").arg(state.appdata), QtGui.QMessageBox.Ok)
+                    "MainWindow", "You may manage your keys by editing the keys.dat file stored in\n %1 \nIt is important that you back up this file.").arg(app.core.state.appdata), QtGui.QMessageBox.Ok)
         elif sys.platform == 'win32' or sys.platform == 'win64':
-            if state.appdata == '':
+            if app.core.state.appdata == '':
                 reply = QtGui.QMessageBox.question(self, _translate("MainWindow", "Open keys.dat?"), _translate(
                     "MainWindow", "You may manage your keys by editing the keys.dat file stored in the same directory as this program. It is important that you back up this file. Would you like to open the file now? (Be sure to close Bitmessage before making any changes.)"), QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
             else:
                 reply = QtGui.QMessageBox.question(self, _translate("MainWindow", "Open keys.dat?"), _translate(
-                    "MainWindow", "You may manage your keys by editing the keys.dat file stored in\n %1 \nIt is important that you back up this file. Would you like to open the file now? (Be sure to close Bitmessage before making any changes.)").arg(state.appdata), QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
+                    "MainWindow", "You may manage your keys by editing the keys.dat file stored in\n %1 \nIt is important that you back up this file. Would you like to open the file now? (Be sure to close Bitmessage before making any changes.)").arg(app.core.state.appdata), QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
             if reply == QtGui.QMessageBox.Yes:
-                openKeysFile()
+                openKeysFile(os.path.join(app.core.state.appdata, 'keys.dat'))
 
     # menu button 'delete all treshed messages'
     def click_actionDeleteAllTrashedMessages(self):
@@ -1621,7 +1618,7 @@ class MyForm(settingsmixin.SMainWindow):
                         "Your address version number must be either 3 or 4."
                     ))
                 return
-            queues.addressGeneratorQueue.put((
+            app.core.queues.addressGeneratorQueue.put((
                 'createDeterministicAddresses',
                 addressVersionNumber, streamNumberForAddress,
                 "regenerated deterministic address",
@@ -1642,9 +1639,9 @@ class MyForm(settingsmixin.SMainWindow):
         if dialog.exec_():
             if dialog.radioButtonConnectNow.isChecked():
                 self.ui.updateNetworkSwitchMenuLabel(False)
-                BMConfigParser().remove_option(
+                app.core.config.remove_option(
                     'bitmessagesettings', 'dontconnect')
-                BMConfigParser().save()
+                app.core.config.save()
             elif dialog.radioButtonConfigureNetwork.isChecked():
                 self.click_actionSettings()
             else:
@@ -1669,7 +1666,7 @@ class MyForm(settingsmixin.SMainWindow):
             self.ui.blackwhitelist.init_blacklist_popup_menu(False)
         if event.type() == QtCore.QEvent.WindowStateChange:
             if self.windowState() & QtCore.Qt.WindowMinimized:
-                if BMConfigParser().getboolean('bitmessagesettings', 'minimizetotray') and not 'darwin' in sys.platform:
+                if app.core.config.getboolean('bitmessagesettings', 'minimizetotray') and not 'darwin' in sys.platform:
                     QtCore.QTimer.singleShot(0, self.appIndicatorHide)
             elif event.oldState() & QtCore.Qt.WindowMinimized:
                 # The window state has just been changed to
@@ -1686,20 +1683,24 @@ class MyForm(settingsmixin.SMainWindow):
 
     def setStatusIcon(self, color):
         # print 'setting status icon color'
-        _notifications_enabled = not BMConfigParser().getboolean(
+        _notifications_enabled = not app.core.config.getboolean(
             'bitmessagesettings', 'hidetrayconnectionnotifications')
         if color == 'red':
             self.pushButtonStatusIcon.setIcon(
                 QtGui.QIcon(":/newPrefix/images/redicon.png"))
-            state.statusIconColor = 'red'
+            app.core.state.statusIconColor = 'red'
             # if the connection is lost then show a notification
             if self.connected and _notifications_enabled:
                 self.notifierShow(
                     'Bitmessage',
                     _translate("MainWindow", "Connection lost"),
                     sound.SOUND_DISCONNECTED)
-            if not BMConfigParser().safeGetBoolean('bitmessagesettings', 'upnp') and \
-                BMConfigParser().get('bitmessagesettings', 'socksproxytype') == "none":
+            if (
+                not app.core.config.safeGetBoolean(
+                    'bitmessagesettings', 'upnp')
+                and app.core.config.get(
+                    'bitmessagesettings', 'socksproxytype') == 'none'
+            ):
                 self.updateStatusBar(
                     _translate(
                         "MainWindow",
@@ -1717,7 +1718,7 @@ class MyForm(settingsmixin.SMainWindow):
                 self.statusbar.clearMessage()
             self.pushButtonStatusIcon.setIcon(
                 QtGui.QIcon(":/newPrefix/images/yellowicon.png"))
-            state.statusIconColor = 'yellow'
+            app.core.state.statusIconColor = 'yellow'
             # if a new connection has been established then show a notification
             if not self.connected and _notifications_enabled:
                 self.notifierShow(
@@ -1735,7 +1736,7 @@ class MyForm(settingsmixin.SMainWindow):
                 self.statusbar.clearMessage()
             self.pushButtonStatusIcon.setIcon(
                 QtGui.QIcon(":/newPrefix/images/greenicon.png"))
-            state.statusIconColor = 'green'
+            app.core.state.statusIconColor = 'green'
             if not self.connected and _notifications_enabled:
                 self.notifierShow(
                     'Bitmessage',
@@ -1942,7 +1943,7 @@ class MyForm(settingsmixin.SMainWindow):
         addresses = getSortedAccounts()
         for address in addresses:
             account = accountClass(address)
-            if (account.type == AccountMixin.CHAN and BMConfigParser().safeGetBoolean(address, 'enabled')):
+            if (account.type == AccountMixin.CHAN and app.core.config.safeGetBoolean(address, 'enabled')):
                 newRows[address] = [account.getLabel(), AccountMixin.CHAN]
         # normal accounts
         queryreturn = sqlQuery('SELECT * FROM addressbook')
@@ -2060,9 +2061,9 @@ class MyForm(settingsmixin.SMainWindow):
                                 email = ''.join(random.SystemRandom().choice(string.ascii_lowercase) for _ in range(12)) + "@mailchuck.com"
                             acct = MailchuckAccount(fromAddress)
                             acct.register(email)
-                            BMConfigParser().set(fromAddress, 'label', email)
-                            BMConfigParser().set(fromAddress, 'gateway', 'mailchuck')
-                            BMConfigParser().save()
+                            app.core.config.set(fromAddress, 'label', email)
+                            app.core.config.set(fromAddress, 'gateway', 'mailchuck')
+                            app.core.config.save()
                             self.updateStatusBar(_translate(
                                 "MainWindow",
                                 "Error: Your account wasn't registered at"
@@ -2155,7 +2156,7 @@ class MyForm(settingsmixin.SMainWindow):
                                 "MainWindow", "Concerning the address %1, Bitmessage cannot handle stream numbers of %2. Perhaps upgrade Bitmessage to the latest version.").arg(toAddress).arg(str(streamNumber)))
                             continue
                         self.statusbar.clearMessage()
-                        if state.statusIconColor == 'red':
+                        if app.core.state.statusIconColor == 'red':
                             self.updateStatusBar(_translate(
                                 "MainWindow",
                                 "Warning: You are currently not connected."
@@ -2175,7 +2176,7 @@ class MyForm(settingsmixin.SMainWindow):
 
                         self.displayNewSentMessage(
                             toAddress, toLabel, fromAddress, subject, message, ackdata)
-                        queues.workerQueue.put(('sendmessage', toAddress))
+                        app.core.queues.workerQueue.put(('sendmessage', toAddress))
 
                         self.click_pushButtonClear()
                         if self.replyFromTab is not None:
@@ -2212,7 +2213,7 @@ class MyForm(settingsmixin.SMainWindow):
                 self.displayNewSentMessage(
                     toAddress, toLabel, fromAddress, subject, message, ackdata)
 
-                queues.workerQueue.put(('sendbroadcast', ''))
+                app.core.queues.workerQueue.put(('sendbroadcast', ''))
 
                 self.ui.comboBoxSendFromBroadcast.setCurrentIndex(0)
                 self.ui.lineEditSubjectBroadcast.setText('')
@@ -2254,18 +2255,18 @@ class MyForm(settingsmixin.SMainWindow):
         self.ui.tabWidgetSend.setCurrentIndex(
             self.ui.tabWidgetSend.indexOf(
                 self.ui.sendBroadcast
-                if BMConfigParser().safeGetBoolean(str(address), 'mailinglist')
+                if app.core.config.safeGetBoolean(str(address), 'mailinglist')
                 else self.ui.sendDirect
             ))
 
     def rerenderComboBoxSendFrom(self):
         self.ui.comboBoxSendFrom.clear()
         for addressInKeysFile in getSortedAccounts():
-            isEnabled = BMConfigParser().getboolean(
+            isEnabled = app.core.config.getboolean(
                 addressInKeysFile, 'enabled')  # I realize that this is poor programming practice but I don't care. It's easier for others to read.
-            isMaillinglist = BMConfigParser().safeGetBoolean(addressInKeysFile, 'mailinglist')
+            isMaillinglist = app.core.config.safeGetBoolean(addressInKeysFile, 'mailinglist')
             if isEnabled and not isMaillinglist:
-                label = unicode(BMConfigParser().get(addressInKeysFile, 'label'), 'utf-8', 'ignore').strip()
+                label = unicode(app.core.config.get(addressInKeysFile, 'label'), 'utf-8', 'ignore').strip()
                 if label == "":
                     label = addressInKeysFile
                 self.ui.comboBoxSendFrom.addItem(avatarize(addressInKeysFile), label, addressInKeysFile)
@@ -2285,11 +2286,11 @@ class MyForm(settingsmixin.SMainWindow):
     def rerenderComboBoxSendFromBroadcast(self):
         self.ui.comboBoxSendFromBroadcast.clear()
         for addressInKeysFile in getSortedAccounts():
-            isEnabled = BMConfigParser().getboolean(
+            isEnabled = app.core.config.getboolean(
                 addressInKeysFile, 'enabled')  # I realize that this is poor programming practice but I don't care. It's easier for others to read.
-            isChan = BMConfigParser().safeGetBoolean(addressInKeysFile, 'chan')
+            isChan = app.core.config.safeGetBoolean(addressInKeysFile, 'chan')
             if isEnabled and not isChan:
-                label = unicode(BMConfigParser().get(addressInKeysFile, 'label'), 'utf-8', 'ignore').strip()
+                label = unicode(app.core.config.get(addressInKeysFile, 'label'), 'utf-8', 'ignore').strip()
                 if label == "":
                     label = addressInKeysFile
                 self.ui.comboBoxSendFromBroadcast.addItem(avatarize(addressInKeysFile), label, addressInKeysFile)
@@ -2390,7 +2391,7 @@ class MyForm(settingsmixin.SMainWindow):
         else:
             acct = ret
         self.propagateUnreadCount(widget=treeWidget if ret else None)
-        if BMConfigParser().safeGetBoolean(
+        if app.core.config.safeGetBoolean(
                 'bitmessagesettings', 'showtraynotifications'):
             self.notifierShow(
                 _translate("MainWindow", "New Message"),
@@ -2410,7 +2411,7 @@ class MyForm(settingsmixin.SMainWindow):
             if acct.feedback != GatewayAccount.ALL_OK:
                 if acct.feedback == GatewayAccount.REGISTRATION_DENIED:
                     dialogs.EmailGatewayDialog(
-                        self, BMConfigParser(), acct).exec_()
+                        self, app.core.config, acct).exec_()
                 # possible other branches?
         except AttributeError:
             pass
@@ -2487,12 +2488,12 @@ class MyForm(settingsmixin.SMainWindow):
         # to the objectProcessorQueue to be processed
         if dialog.checkBoxDisplayMessagesAlreadyInInventory.isChecked():
             for value in dialog.recent:
-                queues.objectProcessorQueue.put((
+                app.core.queues.objectProcessorQueue.put((
                     value.type, value.payload
                 ))
 
     def click_pushButtonStatusIcon(self):
-        dialogs.IconGlossaryDialog(self, config=BMConfigParser()).exec_()
+        dialogs.IconGlossaryDialog(self, config=app.core.config).exec_()
 
     def click_actionHelp(self):
         dialogs.HelpDialog(self).exec_()
@@ -2519,10 +2520,10 @@ class MyForm(settingsmixin.SMainWindow):
 
     def on_action_SpecialAddressBehaviorDialog(self):
         """Show SpecialAddressBehaviorDialog"""
-        dialogs.SpecialAddressBehaviorDialog(self, BMConfigParser())
+        dialogs.SpecialAddressBehaviorDialog(self, app.core.config)
 
     def on_action_EmailGatewayDialog(self):
-        dialog = dialogs.EmailGatewayDialog(self, config=BMConfigParser())
+        dialog = dialogs.EmailGatewayDialog(self, config=app.core.config)
         # For Modal dialogs
         dialog.exec_()
         try:
@@ -2584,7 +2585,7 @@ class MyForm(settingsmixin.SMainWindow):
         dialogs.NewAddressDialog(self)
 
     def network_switch(self):
-        dontconnect_option = not BMConfigParser().safeGetBoolean(
+        dontconnect_option = not app.core.config.safeGetBoolean(
             'bitmessagesettings', 'dontconnect')
         reply = QtGui.QMessageBox.question(
             self, _translate("MainWindow", "Disconnecting")
@@ -2599,9 +2600,9 @@ class MyForm(settingsmixin.SMainWindow):
             QtGui.QMessageBox.Cancel)
         if reply != QtGui.QMessageBox.Yes:
             return
-        BMConfigParser().set(
+        app.core.config.set(
             'bitmessagesettings', 'dontconnect', str(dontconnect_option))
-        BMConfigParser().save()
+        app.core.config.save()
         self.ui.updateNetworkSwitchMenuLabel(dontconnect_option)
 
         self.ui.pushButtonFetchNamecoinID.setHidden(
@@ -2623,7 +2624,10 @@ class MyForm(settingsmixin.SMainWindow):
         waitForSync = False
 
         # C PoW currently doesn't support interrupting and OpenCL is untested
-        if getPowType() == "python" and (powQueueSize() > 0 or pendingUpload() > 0):
+        if (
+            getPowType() == "python"
+            and powQueueSize() > 0 or pendingUpload() > 0
+        ):
             reply = QtGui.QMessageBox.question(
                 self, _translate("MainWindow", "Proof of work pending"),
                 _translate(
@@ -2663,8 +2667,11 @@ class MyForm(settingsmixin.SMainWindow):
             elif reply == QtGui.QMessageBox.Cancel:
                 return
 
-        if state.statusIconColor == 'red' and not BMConfigParser().safeGetBoolean(
-                'bitmessagesettings', 'dontconnect'):
+        if (
+            app.core.state.statusIconColor == 'red'
+            and not app.core.config.safeGetBoolean(
+                'bitmessagesettings', 'dontconnect')
+        ):
             reply = QtGui.QMessageBox.question(
                 self, _translate("MainWindow", "Not connected"),
                 _translate(
@@ -2689,7 +2696,7 @@ class MyForm(settingsmixin.SMainWindow):
         if waitForConnection:
             self.updateStatusBar(_translate(
                 "MainWindow", "Waiting for network connection..."))
-            while state.statusIconColor == 'red':
+            while app.core.state.statusIconColor == 'red':
                 time.sleep(0.5)
                 QtCore.QCoreApplication.processEvents(
                     QtCore.QEventLoop.AllEvents, 1000
@@ -2780,7 +2787,7 @@ class MyForm(settingsmixin.SMainWindow):
         QtCore.QCoreApplication.processEvents(
             QtCore.QEventLoop.AllEvents, 1000
         )
-        shutdown.doCleanShutdown()
+        app.core.stop()
 
         self.updateStatusBar(_translate(
             "MainWindow", "Stopping notifications... %1%").arg(90))
@@ -2799,7 +2806,7 @@ class MyForm(settingsmixin.SMainWindow):
     def closeEvent(self, event):
         """window close event"""
         event.ignore()
-        trayonclose = BMConfigParser().safeGetBoolean(
+        trayonclose = app.core.config.safeGetBoolean(
             'bitmessagesettings', 'trayonclose')
         if trayonclose:
             self.appIndicatorHide()
@@ -2868,7 +2875,8 @@ class MyForm(settingsmixin.SMainWindow):
 
     # Format predefined text on message reply.
     def quoted_text(self, message):
-        if not BMConfigParser().safeGetBoolean('bitmessagesettings', 'replybelow'):
+        if not app.core.config.safeGetBoolean(
+                'bitmessagesettings', 'replybelow'):
             return '\n\n------------------------------------------------------\n' + message
 
         quoteWrapper = textwrap.TextWrapper(
@@ -2955,7 +2963,7 @@ class MyForm(settingsmixin.SMainWindow):
                 self.ui.tabWidgetSend.indexOf(self.ui.sendDirect)
             )
 #            toAddressAtCurrentInboxRow = fromAddressAtCurrentInboxRow
-        elif not BMConfigParser().has_section(toAddressAtCurrentInboxRow):
+        elif not app.core.config.has_section(toAddressAtCurrentInboxRow):
             QtGui.QMessageBox.information(
                 self, _translate("MainWindow", "Address is gone"),
                 _translate(
@@ -2963,7 +2971,7 @@ class MyForm(settingsmixin.SMainWindow):
                     "Bitmessage cannot find your address %1. Perhaps you"
                     " removed it?"
                 ).arg(toAddressAtCurrentInboxRow), QtGui.QMessageBox.Ok)
-        elif not BMConfigParser().getboolean(
+        elif not app.core.config.getboolean(
                 toAddressAtCurrentInboxRow, 'enabled'):
             QtGui.QMessageBox.information(
                 self, _translate("MainWindow", "Address disabled"),
@@ -3053,7 +3061,7 @@ class MyForm(settingsmixin.SMainWindow):
         queryreturn = sqlQuery('''select * from blacklist where address=?''',
                                addressAtCurrentInboxRow)
         if queryreturn == []:
-            label = "\"" + tableWidget.item(currentInboxRow, 2).subject + "\" in " + BMConfigParser().get(recipientAddress, "label")
+            label = "\"" + tableWidget.item(currentInboxRow, 2).subject + "\" in " + app.core.config.get(recipientAddress, "label")
             sqlExecute('''INSERT INTO blacklist VALUES (?,?, ?)''',
                        label,
                        addressAtCurrentInboxRow, True)
@@ -3217,9 +3225,12 @@ class MyForm(settingsmixin.SMainWindow):
         queryreturn = sqlQuery('''select ackdata FROM sent WHERE status='forcepow' ''')
         for row in queryreturn:
             ackdata, = row
-            queues.UISignalQueue.put(('updateSentItemStatusByAckdata', (
-                ackdata, 'Overriding maximum-difficulty setting. Work queued.')))
-        queues.workerQueue.put(('sendmessage', ''))
+            app.core.queues.UISignalQueue.put((
+                'updateSentItemStatusByAckdata', (
+                    ackdata,
+                    'Overriding maximum-difficulty setting. Work queued.')
+            ))
+        app.core.queues.workerQueue.put(('sendmessage', ''))
 
     def on_action_SentClipboard(self):
         currentRow = self.ui.tableWidgetInbox.currentRow()
@@ -3570,12 +3581,12 @@ class MyForm(settingsmixin.SMainWindow):
                         " delete the channel?"
                     ), QtGui.QMessageBox.Yes | QtGui.QMessageBox.No
             ) == QtGui.QMessageBox.Yes:
-                BMConfigParser().remove_section(str(account.address))
+                app.core.config.remove_section(str(account.address))
             else:
                 return
         else:
             return
-        BMConfigParser().save()
+        app.core.config.save()
         shared.reloadMyAddressHashes()
         self.rerenderAddressBook()
         self.rerenderComboBoxSendFrom()
@@ -3591,8 +3602,8 @@ class MyForm(settingsmixin.SMainWindow):
         account.setEnabled(True)
 
     def enableIdentity(self, address):
-        BMConfigParser().set(address, 'enabled', 'true')
-        BMConfigParser().save()
+        app.core.config.set(address, 'enabled', 'true')
+        app.core.config.save()
         shared.reloadMyAddressHashes()
         self.rerenderAddressBook()
 
@@ -3603,8 +3614,8 @@ class MyForm(settingsmixin.SMainWindow):
         account.setEnabled(False)
 
     def disableIdentity(self, address):
-        BMConfigParser().set(str(address), 'enabled', 'false')
-        BMConfigParser().save()
+        app.core.config.set(str(address), 'enabled', 'false')
+        app.core.config.save()
         shared.reloadMyAddressHashes()
         self.rerenderAddressBook()
 
@@ -3657,9 +3668,11 @@ class MyForm(settingsmixin.SMainWindow):
 
     # TODO: reuse utils
     def setAvatar(self, addressAtCurrentRow):
-        if not os.path.exists(state.appdata + 'avatars/'):
-            os.makedirs(state.appdata + 'avatars/')
-        hash = hashlib.md5(addBMIfNotPresent(addressAtCurrentRow)).hexdigest()
+        destination = app.core.state.appdata + 'avatars/'
+        if not os.path.exists(destination):
+            os.makedirs(destination)
+        addrhash = hashlib.md5(
+            addBMIfNotPresent(addressAtCurrentRow)).hexdigest()
         extensions = [
             'PNG', 'GIF', 'JPG', 'JPEG', 'SVG', 'BMP', 'MNG', 'PBM',
             'PGM', 'PPM', 'TIFF', 'XBM', 'XPM', 'TGA']
@@ -3685,8 +3698,9 @@ class MyForm(settingsmixin.SMainWindow):
         for ext in extensions:
             filters += [names[ext] + ' (*.' + ext.lower() + ')']
             all_images_filter += ['*.' + ext.lower()]
-            upper = state.appdata + 'avatars/' + hash + '.' + ext.upper()
-            lower = state.appdata + 'avatars/' + hash + '.' + ext.lower()
+            upper = lower = destination + addrhash
+            upper += ext.upper()
+            lower += ext.lower()
             if os.path.isfile(lower):
                 current_files += [lower]
             elif os.path.isfile(upper):
@@ -3697,8 +3711,9 @@ class MyForm(settingsmixin.SMainWindow):
             self, _translate("MainWindow", "Set avatar..."),
             filter=';;'.join(filters)
         )
-        # determine the correct filename (note that avatars don't use the suffix)
-        destination = state.appdata + 'avatars/' + hash + '.' + sourcefile.split('.')[-1]
+        # determine the correct filename
+        # (note that avatars don't use the suffix)
+        destination += '.' + sourcefile.split('.')[-1]
         exists = QtCore.QFile.exists(destination)
         if sourcefile == '':
             # ask for removal of avatar
@@ -3765,7 +3780,7 @@ class MyForm(settingsmixin.SMainWindow):
         if not sourcefile:
             return
 
-        destdir = os.path.join(state.appdata, 'sounds')
+        destdir = os.path.join(app.core.state.appdata, 'sounds')
         destfile = unicode(addr) + os.path.splitext(sourcefile)[-1]
         destination = os.path.join(destdir, destfile)
 
@@ -4087,7 +4102,7 @@ class MyForm(settingsmixin.SMainWindow):
 
         # Check to see whether we can connect to namecoin.
         # Hide the 'Fetch Namecoin ID' button if we can't.
-        if BMConfigParser().safeGetBoolean(
+        if app.core.config.safeGetBoolean(
             'bitmessagesettings', 'dontconnect'
         ) or self.namecoin.test()[0] == 'failed':
             logger.warning(
@@ -4175,9 +4190,10 @@ def init():
     return app
 
 
-def run():
+def run(parent):
     global myapp
     app = init()
+    app.core = parent
     myapp = MyForm()
 
     myapp.appIndicatorInit(app)
@@ -4186,13 +4202,13 @@ def run():
         myapp.showConnectDialog()  # ask the user if we may connect
 
 #    try:
-#        if BMConfigParser().get('bitmessagesettings', 'mailchuck') < 1:
-#            myapp.showMigrationWizard(BMConfigParser().get('bitmessagesettings', 'mailchuck'))
+#        if app.core.config.get('bitmessagesettings', 'mailchuck') < 1:
+#            myapp.showMigrationWizard(app.core.config.get('bitmessagesettings', 'mailchuck'))
 #    except:
 #        myapp.showMigrationWizard(0)
 
     # only show after wizards and connect dialogs have completed
-    if not BMConfigParser().getboolean('bitmessagesettings', 'startintray'):
+    if not app.core.config.getboolean('bitmessagesettings', 'startintray'):
         myapp.show()
 
     app.exec_()

@@ -32,6 +32,7 @@ import traceback
 from struct import pack
 
 import defaults
+import queues
 import shared
 import shutdown
 import state
@@ -153,7 +154,9 @@ class Main(object):
         _fixSocket()
         adjustHalfOpenConnectionsLimit()
 
-        config = BMConfigParser()
+        self.config = config = BMConfigParser()
+        self.queues = queues
+        self.state = state
         daemon = config.safeGetBoolean('bitmessagesettings', 'daemon')
 
         try:
@@ -357,7 +360,7 @@ class Main(object):
                 # NavigateApp().run()
             else:
                 import bitmessageqt
-                bitmessageqt.run()
+                bitmessageqt.run(self)
         else:
             config.remove_option('bitmessagesettings', 'dontconnect')
 

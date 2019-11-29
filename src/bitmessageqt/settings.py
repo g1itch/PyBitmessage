@@ -13,10 +13,7 @@ import defaults
 import namecoin
 import openclpow
 import paths
-import queues
-import state
 import widgets
-from bmconfigparser import BMConfigParser
 from helper_sql import sqlExecute, sqlStoredProcedure
 from helper_startup import start_proxyconfig
 from network import knownnodes
@@ -45,7 +42,12 @@ class SettingsDialog(QtGui.QDialog):
 
         self.parent = parent
         self.firstrun = firstrun
-        self.config = BMConfigParser()
+
+        core = QtGui.QApplication.instance().core
+        self.config = core.config
+        self.state = core.state
+        self.workerQueue = core.queues.workerQueue
+
         self.net_restart_needed = False
         self.timer = QtCore.QTimer()
 
@@ -108,7 +110,7 @@ class SettingsDialog(QtGui.QDialog):
         self.checkBoxReplyBelow.setChecked(
             config.safeGetBoolean('bitmessagesettings', 'replybelow'))
 
-        if state.appdata == paths.lookupExeFolder():
+        if self.state.appdata == paths.lookupExeFolder():
             self.checkBoxPortableMode.setChecked(True)
         else:
             try:
@@ -342,7 +344,7 @@ class SettingsDialog(QtGui.QDialog):
 
         proxytype_index = self.comboBoxProxyType.currentIndex()
         if proxytype_index == 0:
-            if self._proxy_type and state.statusIconColor != 'red':
+            if self._proxy_type and self.state.statusIconColor != 'red':
                 self.net_restart_needed = True
         elif state.statusIconColor == 'red' and self.config.safeGetBoolean('bitmessagesettings', 'dontconnect'):
             self.net_restart_needed = False
@@ -428,7 +430,7 @@ class SettingsDialog(QtGui.QDialog):
             self.config.set(
                 'bitmessagesettings', 'opencl',
                 str(self.comboBoxOpenCL.currentText()))
-            queues.workerQueue.put(('resetPoW', ''))
+            self.workerQueue.put(('resetPoW', ''))
 
         acceptableDifficultyChanged = False
 
@@ -475,7 +477,7 @@ class SettingsDialog(QtGui.QDialog):
             sqlExecute(
                 "UPDATE sent SET status='msgqueued'"
                 " WHERE status='toodifficult'")
-            queues.workerQueue.put(('sendmessage', ''))
+            self.workerQueue.put(('sendmessage', ''))
 
         stopResendingDefaults = False
 
@@ -486,7 +488,7 @@ class SettingsDialog(QtGui.QDialog):
             # default behavior. The input is blank/blank
             self.config.set('bitmessagesettings', 'stopresendingafterxdays', '')
             self.config.set('bitmessagesettings', 'stopresendingafterxmonths', '')
-            state.maximumLengthOfTimeToBotherResendingMessages = float('inf')
+            self.state.maximumLengthOfTimeToBotherResendingMessages = float('inf')
             stopResendingDefaults = True
 
         try:
@@ -501,9 +503,9 @@ class SettingsDialog(QtGui.QDialog):
             months = 0.0
 
         if days >= 0 and months >= 0 and not stopResendingDefaults:
-            state.maximumLengthOfTimeToBotherResendingMessages = \
+            self.state.maximumLengthOfTimeToBotherResendingMessages = \
                 days * 24 * 60 * 60 + months * 60 * 60 * 24 * 365 / 12
-            if state.maximumLengthOfTimeToBotherResendingMessages < 432000:
+            if self.state.maximumLengthOfTimeToBotherResendingMessages < 432000:
                 # If the time period is less than 5 hours, we give
                 # zero values to all fields. No message will be sent again.
                 QtGui.QMessageBox.about(
@@ -520,7 +522,7 @@ class SettingsDialog(QtGui.QDialog):
                     'bitmessagesettings', 'stopresendingafterxdays', '0')
                 self.config.set(
                     'bitmessagesettings', 'stopresendingafterxmonths', '0')
-                state.maximumLengthOfTimeToBotherResendingMessages = 0.0
+                self.state.maximumLengthOfTimeToBotherResendingMessages = 0.0
             else:
                 self.config.set(
                     'bitmessagesettings', 'stopresendingafterxdays', str(days))
@@ -542,8 +544,8 @@ class SettingsDialog(QtGui.QDialog):
         self.parent.updateStartOnLogon()
 
         if (
-                state.appdata != paths.lookupExeFolder()
-                and self.checkBoxPortableMode.isChecked()
+            self.state.appdata != paths.lookupExeFolder()
+            and self.checkBoxPortableMode.isChecked()
         ):
             # If we are NOT using portable mode now but the user selected
             # that we should...
@@ -553,10 +555,10 @@ class SettingsDialog(QtGui.QDialog):
                 self.config.write(configfile)
             # Write the knownnodes.dat file to disk in the new location
             knownnodes.saveKnownNodes(paths.lookupExeFolder())
-            os.remove(state.appdata + 'keys.dat')
-            os.remove(state.appdata + 'knownnodes.dat')
-            previousAppdataLocation = state.appdata
-            state.appdata = paths.lookupExeFolder()
+            os.remove(self.state.appdata + 'keys.dat')
+            os.remove(self.state.appdata + 'knownnodes.dat')
+            previousAppdataLocation = self.state.appdata
+            self.state.appdata = paths.lookupExeFolder()
             debug.resetLogging()
             try:
                 os.remove(previousAppdataLocation + 'debug.log')
@@ -565,19 +567,19 @@ class SettingsDialog(QtGui.QDialog):
                 pass
 
         if (
-                state.appdata == paths.lookupExeFolder()
-                and not self.checkBoxPortableMode.isChecked()
+            self.state.appdata == paths.lookupExeFolder()
+            and not self.checkBoxPortableMode.isChecked()
         ):
             # If we ARE using portable mode now but the user selected
             # that we shouldn't...
-            state.appdata = paths.lookupAppdataFolder()
-            if not os.path.exists(state.appdata):
-                os.makedirs(state.appdata)
+            self.state.appdata = paths.lookupAppdataFolder()
+            if not os.path.exists(self.state.appdata):
+                os.makedirs(self.state.appdata)
             sqlStoredProcedure('movemessagstoappdata')
             # Write the keys.dat file to disk in the new location
             self.config.save()
             # Write the knownnodes.dat file to disk in the new location
-            knownnodes.saveKnownNodes(state.appdata)
+            knownnodes.saveKnownNodes(self.state.appdata)
             os.remove(paths.lookupExeFolder() + 'keys.dat')
             os.remove(paths.lookupExeFolder() + 'knownnodes.dat')
             debug.resetLogging()
