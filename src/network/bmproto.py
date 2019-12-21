@@ -1,7 +1,7 @@
 """
 Class BMProto defines bitmessage's network protocol workflow.
 """
-# pylint: disable=attribute-defined-outside-init, too-few-public-methods
+
 import base64
 import hashlib
 import logging
@@ -55,6 +55,7 @@ class BMProtoExcessiveDataError(BMProtoError):
 class BMProto(AdvancedDispatcher, ObjectTracker):
     """A parser for the Bitmessage Protocol"""
     # pylint: disable=too-many-instance-attributes, too-many-public-methods
+    # pylint: disable=attribute-defined-outside-init
     timeOffsetWrongCount = 0
 
     def __init__(self, address=None, sock=None):
@@ -204,7 +205,6 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
 
         def decode_simple(self, char="v"):
             """Decode the payload using one char pattern"""
-            # pylint: disable=inconsistent-return-statements
             if char == "v":
                 return self.decode_payload_varint()
             if char == "i":
@@ -221,6 +221,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
                 self.payloadOffset += 8
                 return struct.unpack(">Q", self.payload[
                     self.payloadOffset - 8:self.payloadOffset])[0]
+            return None
 
         size = None
         isArray = False
@@ -269,7 +270,8 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             elif i == "s":
                 # if parserStack[-2][2]:
                 #    parserStack[-1][5].append(self.payload[
-                #        self.payloadOffset:self.payloadOffset + parserStack[-1][0]])
+                #        self.payloadOffset:self.payloadOffset
+                #        + parserStack[-1][0]])
                 # else:
                 parserStack[-1][5] = self.payload[
                     self.payloadOffset:self.payloadOffset + parserStack[-1][0]]
@@ -314,11 +316,9 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
 
     def bm_command_error(self):
         """Decode an error message and log it"""
-        err_values = self.decode_payload_content("vvlsls")
-        fatalStatus = err_values[0]
-        # banTime = err_values[1]
-        # inventoryVector = err_values[2]
-        errorText = err_values[3]
+        decoded = self.decode_payload_content("vvlsls")
+        fatalStatus = decoded[0]
+        errorText = decoded[3]
         logger.error(
             '%s:%i error: %i, %s', self.destination.host,
             self.destination.port, fatalStatus, errorText)
@@ -440,6 +440,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
 
     def bm_command_addr(self):
         """Incoming addresses, process them"""
+        # pylint: disable=unused-variable
         for seenTime, stream, services, ip, port in self._decode_addr():
             decodedIP = protocol.checkIPAddress(str(ip))
             if stream not in state.streamsInWhichIAmParticipating:
@@ -484,7 +485,8 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         self.append_write_buf(protocol.CreatePacket('pong'))
         return True
 
-    def bm_command_pong(self):  # pylint: disable=no-self-use
+    @staticmethod
+    def bm_command_pong():
         """
         Incoming pong.
         Ignore it. PyBitmessage pings connections after about 5 minutes
@@ -595,8 +597,8 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
                 'Closed connection to %s because there is no overlapping'
                 ' interest in streams.', self.destination)
             return False
-        # .get() ?
-        if self.destination in connectionpool.BMConnectionPool().inboundConnections:
+        if connectionpool.BMConnectionPool().inboundConnections.get(
+                self.destination):
             try:
                 if not protocol.checkSocksIP(self.destination.host):
                     self.append_write_buf(protocol.assembleErrorMessage(
@@ -614,8 +616,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             if (
                 Peer(self.destination.host, self.peerNode.port)
                 in connectionpool.BMConnectionPool().inboundConnections
-                or len(connectionpool.BMConnectionPool().inboundConnections)
-                + len(connectionpool.BMConnectionPool().outboundConnections)
+                or len(connectionpool.BMConnectionPool().connections())
                 > BMConfigParser().safeGetInt(
                     'bitmessagesettings', 'maxtotalconnections')
                 + BMConfigParser().safeGetInt(
@@ -670,7 +671,8 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         except AttributeError:
             try:
                 logger.debug(
-                    '%(host)s:%(port)i: closing', self.destination._asdict())
+                    '%s:%i: closing',
+                    self.destination.host, self.destination.port)
             except AttributeError:
                 logger.debug('Disconnected socket closing')
         AdvancedDispatcher.handle_close(self)
