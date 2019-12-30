@@ -76,7 +76,7 @@ class UPnPError(Exception):
 
     def __init__(self, message):
         super(UPnPError, self).__init__()
-        logger.error(message)
+        # logger.error(message)
 
 
 class Router:  # pylint: disable=old-style-class
@@ -112,14 +112,15 @@ class Router:  # pylint: disable=old-style-class
         dom = parseString(directory)
 
         self.name = dom.getElementsByTagName('friendlyName')[0].childNodes[0].data
-        # find all 'serviceType' elements
-        service_types = dom.getElementsByTagName('serviceType')
 
-        for service in service_types:
-            if service.childNodes[0].data.find('WANIPConnection') > 0 or \
-                    service.childNodes[0].data.find('WANPPPConnection') > 0:
-                self.path = service.parentNode.getElementsByTagName('controlURL')[0].childNodes[0].data
-                self.upnp_schema = service.childNodes[0].data.split(':')[-2]
+        # find all 'serviceType' elements
+        for service in dom.getElementsByTagName('serviceType'):
+            upnp_schema = service.childNodes[0].data.split(':')[-2]
+            if upnp_schema in ('WANIPConnection', 'WANPPPConnection'):
+                self.upnp_schema = upnp_schema
+                self.path = service.parentNode.getElementsByTagName(
+                    'controlURL')[0].childNodes[0].data
+                break
 
     def AddPortMapping(
             self,
@@ -132,6 +133,9 @@ class Router:  # pylint: disable=old-style-class
             enabled=1,
     ):  # pylint: disable=too-many-arguments
         """Add UPnP port mapping"""
+
+        if not self.path:
+            raise UPnPError("No WAN connection")
 
         resp = self.soapRequest(self.upnp_schema + ':1', 'AddPortMapping', [
             ('NewRemoteHost', ''),
