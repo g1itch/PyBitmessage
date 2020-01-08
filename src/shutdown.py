@@ -8,8 +8,7 @@ import state
 from debug import logger
 from helper_sql import sqlQuery, sqlStoredProcedure
 from inventory import Inventory
-from network import StoppableThread
-from network.knownnodes import saveKnownNodes
+from network import knownnodes, StoppableThread
 from queues import (
     addressGeneratorQueue, objectProcessorQueue, UISignalQueue, workerQueue)
 
@@ -29,7 +28,7 @@ def doCleanShutdown():
         'updateStatusBar',
         'Saving the knownNodes list of peers to disk...'))
     logger.info('Saving knownNodes list of peers to disk')
-    saveKnownNodes()
+    knownnodes.saveKnownNodes()
     logger.info('Done saving knownNodes list of peers to disk')
     UISignalQueue.put((
         'updateStatusBar',
@@ -78,6 +77,37 @@ def doCleanShutdown():
                 queue.task_done()
             except Queue.Empty:
                 break
+
+    # Log knownnodes/outages/multiport statistics
+    dupes = {}
+    nodes_counter = 0
+    for stream in knownnodes.knownNodes.itervalues():
+        for peer in stream:
+            nodes_counter += 1
+            dup = dupes.get(peer.host)
+            port = str(peer.port)
+            if dup:
+                dupes[peer.host].append(port)
+            else:
+                dupes[peer.host] = [port]
+
+    dup_counter = 0
+    max_ports = (1, '')
+    for dup, ports in dupes.iteritems():
+        ports_len = len(ports)
+        if ports_len > 1:
+            dup_counter += 1
+            if ports_len > max_ports[0]:
+                max_ports = (ports_len, dup)
+            logger.warning(
+                'Multiport host: %s, ports: %s',
+                dup, ', '.join(ports))
+    logger.warning(
+        'Knownnodes len: %s, outages: %s, multiport: %s',
+        nodes_counter, len(knownnodes.outages), dup_counter)
+    if max_ports[0] > 0:
+        logger.warning(
+            'Maximum number of ports %s - %s', *max_ports)
 
     if state.thisapp.daemon or not state.enableGUI:
         logger.info('Clean shutdown complete.')
