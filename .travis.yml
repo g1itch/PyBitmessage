@@ -20,6 +20,19 @@ jobs:
       dist: bionic
     - os: osx
       language: generic
+    - stage: deploy
+      script: skip
+      deploy:
+        provider: releases
+        token:
+          secure: YOUR_API_KEY_ENCRYPTED
+        file:
+          - dist/pybitmessage-${VERSION}.tar.gz
+          - dist/python-pybitmessage_${VERSION}-1_amd64.deb
+        cleanup: false
+        draft: true
+        on:
+          tags: true
 install:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
     pip install -r requirements.txt;
@@ -31,3 +44,9 @@ script:
   - python checkdeps.py
   - xvfb-run src/bitmessagemain.py -t
   - python setup.py test
+before_deploy:
+  - sudo apt-get install -yq python-stdeb fakeroot python-all-dev dh-python;
+  - python setup.py sdist;
+  - export VERSION=$(python setup.py --version);
+  - py2dsc-deb dist/pybitmessage-${VERSION}.tar.gz;
+  - mv deb_dist/python-pybitmessage_${VERSION}-1_amd64.deb dist/
