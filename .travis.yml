@@ -9,9 +9,17 @@ addons:
       - python-qt4
       - tor
       - xvfb
+jobs:
+  include:
+    - os: linux
+      dist: xenial
+    - os: linux
+      dist: bionic
+    - os: osx
+      if: tag IS present
+      language: generic
 install:
-  - pip install -r requirements.txt
-  - ln -s src pybitmessage  # tests environment
+  - pip install -r requirements.txt;
   - python setup.py install
 script:
   - python checkdeps.py
