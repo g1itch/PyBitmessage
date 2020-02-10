@@ -312,7 +312,8 @@ class Main(object):
         # start network components if networking is enabled
         if state.enableNetwork:
             start_proxyconfig()
-            BMConnectionPool().connectToStream(1)
+            BMConnectionPool().connectToStream(
+                1 if not state.enableObjProc else None)
             asyncoreThread = BMNetworkThread()
             asyncoreThread.daemon = True
             asyncoreThread.start()
@@ -341,8 +342,8 @@ class Main(object):
                 upnpThread = upnp.uPnPThread()
                 upnpThread.start()
         else:
-            # Populate with hardcoded value (same as connectToStream above)
-            state.streamsInWhichIAmParticipating.append(1)
+            # Populate with hardcoded value just in case
+            state.streamsInWhichIAmParticipating.add(1)
 
         if not daemon and state.enableGUI:
             if state.curses:

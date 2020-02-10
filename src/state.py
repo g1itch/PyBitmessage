@@ -3,7 +3,7 @@ Global runtime variables.
 """
 
 neededPubkeys = {}
-streamsInWhichIAmParticipating = []
+streamsInWhichIAmParticipating = set()
 
 extPort = None
 """For UPnP"""

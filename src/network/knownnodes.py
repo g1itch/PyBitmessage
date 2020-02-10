@@ -171,8 +171,9 @@ def readKnownNodes():
         onionport = config.safeGetInt('bitmessagesettings', 'onionport')
         if onionport:
             self_peer = Peer(onionhostname, onionport)
-            addKnownNode(1, self_peer, is_self=True)
             state.ownAddresses[self_peer] = True
+            for stream in state.streamsInWhichIAmParticipating:
+                addKnownNode(stream, self_peer, is_self=True)
 
 
 def increaseRating(peer):

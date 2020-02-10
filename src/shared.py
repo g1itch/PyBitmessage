@@ -122,6 +122,7 @@ def reloadMyAddressHashes():
             hasEnabledKeys = True
             # status
             addressVersionNumber, streamNumber, hashobj = decodeAddress(addressInKeysFile)[1:]
+            state.streamsInWhichIAmParticipating.add(streamNumber)
             if addressVersionNumber in (2, 3, 4):
                 # Returns a simple 32 bytes of information encoded
                 # in 64 Hex characters, or null if there was an error.
@@ -160,6 +161,7 @@ def reloadBroadcastSendersForWhichImWatching():
         address, = row
         # status
         addressVersionNumber, streamNumber, hashobj = decodeAddress(address)[1:]
+        state.streamsInWhichIAmParticipating.add(streamNumber)
         if addressVersionNumber == 2:
             broadcastSendersForWhichImWatching[hashobj] = 0
         # Now, for all addresses, even version 2 addresses,

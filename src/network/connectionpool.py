@@ -55,7 +55,7 @@ class BMConnectionPool(object):
         self.inboundConnections = {}
         self.listeningSockets = {}
         self.udpSockets = {}
-        self.streams = []
+        self.streams = set()
         self._lastSpawned = 0
         self._spawnWait = 2
         self._bootstrapped = False
@@ -87,10 +87,18 @@ class BMConnectionPool(object):
         return [
             x for x in self.connections() if x.fullyEstablished]
 
-    def connectToStream(self, streamNumber):
-        """Connect to a bitmessage stream"""
-        self.streams.append(streamNumber)
-        state.streamsInWhichIAmParticipating.append(streamNumber)
+    def connectToStream(self, streamNumber=None):
+        """
+        Connect to the *streamNumber* bitmessage stream if given;
+        otherwice connect to all streams listed in
+        `state.streamsInWhichIAmParticipating`
+        """
+        if streamNumber:
+            self.streams.add(streamNumber)
+            state.streamsInWhichIAmParticipating.add(streamNumber)
+        else:
+            for streamNumber in state.streamsInWhichIAmParticipating:
+                self.streams.add(streamNumber)
 
     def getConnectionByAddr(self, addr):
         """
@@ -292,8 +300,8 @@ class BMConnectionPool(object):
                         state.maximumNumberOfHalfOpenConnections - pending):
                     try:
                         chosen = self.trustedPeer or chooseConnection(
-                            helper_random.randomchoice(self.streams))
-                    except ValueError:
+                            helper_random.randomchoice(list(self.streams)))
+                    except (ValueError, IndexError):
                         continue
                     if chosen in self.outboundConnections:
                         continue
