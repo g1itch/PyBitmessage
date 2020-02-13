@@ -21,6 +21,7 @@ jobs:
     - os: osx
       language: generic
     - stage: deploy
+      dist: bionic
       script: skip
       deploy:
         provider: releases
@@ -29,6 +30,8 @@ jobs:
         file:
           - dist/pybitmessage-${VERSION}.tar.gz
           - dist/python-pybitmessage_${VERSION}-1_amd64.deb
+          - dist/Bitmessage_x86_${VERSION}.exe
+          - dist/Bitmessage_x64_${VERSION}.exe
         cleanup: false
         draft: true
         on:
@@ -45,8 +48,14 @@ script:
   - xvfb-run src/bitmessagemain.py -t
   - python setup.py test
 before_deploy:
-  - sudo apt-get install -yq python-stdeb fakeroot python-all-dev dh-python;
-  - python setup.py sdist;
-  - export VERSION=$(python setup.py --version);
-  - py2dsc-deb dist/pybitmessage-${VERSION}.tar.gz;
+  - sudo apt-get install -yq python-stdeb fakeroot python-all-dev dh-python wine-stable winetricks wine32 wine64 mingw-w64 xvfb
+  - python setup.py sdist
+  - export VERSION=$(python setup.py --version)
+  - py2dsc-deb dist/pybitmessage-${VERSION}.tar.gz
   - mv deb_dist/python-pybitmessage_${VERSION}-1_amd64.deb dist/
+  - export WINDIST=$HOME/build/$TRAVIS_REPO_SLUG/packages/pyinstaller/dist/
+  - xvfb-run buildscripts/winbuild.sh
+  - mv ${WINDIST}/Bitmessage_x64_${VERSION}.exe dist/
+  - xvfb-run i386 buildscripts/winbuild.sh
+  - mv ${WINDIST}/Bitmessage_x86_${VERSION}.exe dist/
+  - ls -hal dist
