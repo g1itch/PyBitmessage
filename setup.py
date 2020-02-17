@@ -43,12 +43,17 @@ class InstallCmd(install):
 
 
 if __name__ == "__main__":
+    import sys
+
     here = os.path.abspath(os.path.dirname(__file__))
     with open(os.path.join(here, 'README.md')) as f:
         README = f.read()
 
-    with open(os.path.join(here, 'requirements.txt'), 'r') as f:
-        requirements = list(f.readlines())
+    if sys.platform[:5] == 'linux':
+        with open(os.path.join(here, 'requirements.txt'), 'r') as f:
+            requirements = list(f.readlines())
+    else:
+        requirements = []
 
     bitmsghash = Extension(
         'pybitmessage.bitmsghash.bitmsghash',
