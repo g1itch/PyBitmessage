@@ -4,10 +4,15 @@ Testing the logger configuration
 
 import logging
 import os
+import sys
 import tempfile
 import unittest
 
 
+@unittest.skipIf(
+    sys.platform[:5] != 'linux'
+    or os.getenv('TRAVIS_DIST') not in (None, 'xenial'),
+    'appdata confusion')
 class TestLogger(unittest.TestCase):
     """A test case for bmconfigparser"""
 
