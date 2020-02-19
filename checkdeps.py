@@ -51,6 +51,7 @@ EXTRAS_REQUIRE_DEPS = {
         "Fedora": ["prctl"],
         "Guix": [""],
         "Gentoo": ["dev-python/python-prctl"],
+        "Windows": [""]
     },
 }
 

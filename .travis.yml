@@ -13,6 +13,7 @@ addons:
 jobs:
   allow_failures:
     - python: "3.6"
+    - os: windows
   include:
     - os: linux
       dist: xenial
@@ -20,6 +21,17 @@ jobs:
       dist: bionic
     - os: osx
       language: generic
+    - os: windows
+      language: shell
+      before_install:
+        - choco install python2
+        - choco install --ignore-dependencies vcpython27
+        - python -m pip install --upgrade pip
+        - wget -c -nc -nv --content-disposition https://github.com/Bitmessage/ThirdPartyLibraries/blob/master/Win64OpenSSL-1_0_2t.exe?raw=true
+        - powershell -Command "Start-Process -FilePath Win64OpenSSL-1_0_2t.exe -ArgumentList '/q /norestart /silent /verysilent /sp- /suppressmsgboxes /dir=C:\OpenSSL-Win64' -Wait"
+      env:
+        - PATH=/c/Python27:/c/Python27/Scripts:$PATH
+        - OPENSSL_DIR="c:\\OpenSSL-Win64"
     - stage: deploy
       dist: bionic
       script: skip
