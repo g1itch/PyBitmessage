@@ -10,7 +10,10 @@ class TestNetworkGroup(unittest.TestCase):
     """
     def test_network_group(self):
         """Test various types of network groups"""
+        from pybitmessage.helper_startup import fixSocket
         from pybitmessage.protocol import network_group
+
+        fixSocket()
 
         test_ip = '1.2.3.4'
         self.assertEqual('\x01\x02', network_group(test_ip))
