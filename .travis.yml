@@ -28,6 +28,7 @@ jobs:
         - choco install python2
         - choco install --ignore-dependencies vcpython27
         - python -m pip install --upgrade pip
+        - pip install pypiwin32
         - wget -c -nc -nv --content-disposition https://github.com/Bitmessage/ThirdPartyLibraries/blob/master/Win64OpenSSL-1_0_2t.exe?raw=true
         - powershell -Command "Start-Process -FilePath Win64OpenSSL-1_0_2t.exe -ArgumentList '/q /norestart /silent /verysilent /sp- /suppressmsgboxes /dir=C:\OpenSSL-Win64' -Wait"
       env:
@@ -52,6 +53,16 @@ jobs:
 install:
   - pip install -r requirements.txt
   - python setup.py install
+  - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then
+    pip install -I pyinstaller==3.6;
+    python setup.py build_ext --inplace;
+    pushd packages/pyinstaller;
+    pyinstaller bitmessagemain.spec;
+    ls -hal dist;
+    popd;
+    cp packages/pyinstaller/dist/Bitmessage_x64_${VERSION}.exe pybitmessage.exe;
+    fi
+  - python setup.py install;
 script:
   - python checkdeps.py
   - xvfb-run src/bitmessagemain.py -t
