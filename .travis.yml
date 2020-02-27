@@ -22,10 +22,13 @@ jobs:
     - os: osx
       if: tag IS present
       language: generic
+      before_install:
+        - brew install tor
+        - brew services start tor
     - os: windows
       language: shell
       before_install:
-        - choco install python2
+        - choco install python2 tor
         - choco install --ignore-dependencies vcpython27
         - python -m pip install --upgrade pip
         - pip install pypiwin32
