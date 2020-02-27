@@ -25,7 +25,7 @@ jobs:
     - os: windows
       language: shell
       before_install:
-        - choco install python2
+        - choco install python2 tor
         - choco install --ignore-dependencies vcpython27
         - python -m pip install --upgrade pip
         - wget -c -nc -nv --content-disposition https://github.com/Bitmessage/ThirdPartyLibraries/blob/master/Win64OpenSSL-1_0_2t.exe?raw=true
