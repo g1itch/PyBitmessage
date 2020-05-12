@@ -16,6 +16,13 @@ class TestOpenSSL(unittest.TestCase):
     """
     Test cases for OpenSSL
     """
+    @classmethod
+    def setUpClass(cls):
+        import ssl
+        print(
+            '\nOpenSSL: %s (Python internal), %s (external for PyElliptic)\n'
+            % (ssl.OPENSSL_VERSION, OpenSSL._version))
+
     def test_is_odd(self):
         """Test BN_is_odd implementation"""
         ctx = OpenSSL.BN_CTX_new()
