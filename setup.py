@@ -100,6 +100,10 @@ if __name__ == "__main__":
                 ['packages/apparmor/pybitmessage'])
         ]
 
+    keys_conditional = {}
+    if sys.hexversion > 0x30300F0:
+        keys_conditional['test_suite'] = 'pybitmessage.tests'
+
     dist = setup(
         name='pybitmessage',
         version=softwareVersion,
@@ -165,5 +169,6 @@ if __name__ == "__main__":
         command_options={
             'build_sphinx': {
                 'source_dir': ('setup.py', 'docs')}
-        }
+        },
+        **keys_conditional
     )
