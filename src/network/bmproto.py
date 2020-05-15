@@ -524,10 +524,15 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         self.append_write_buf(protocol.CreatePacket('verack'))
         self.verackSent = True
         if not self.isOutbound:
+            common_streams = self.streams.intersection(
+                connectionpool.BMConnectionPool().streams)
+            try:  # leave one because of bug in decode_payload_content()
+                common_streams = [min(common_streams)]
+            except ValueError:
+                common_streams = [1]
             self.append_write_buf(protocol.assembleVersionMessage(
                 self.destination.host, self.destination.port,
-                connectionpool.BMConnectionPool().streams, True,
-                nodeid=self.nodeid))
+                common_streams, True, nodeid=self.nodeid))
             logger.debug(
                 '%(host)s:%(port)i sending version',
                 self.destination._asdict())
