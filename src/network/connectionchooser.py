@@ -44,7 +44,10 @@ def chooseConnection(stream):
         # discovered peers are already filtered by allowed streams
         return getDiscoveredPeer()
     for _ in range(50):
-        peer = random.choice(knownnodes.knownNodes[stream].keys())
+        try:
+            peer = random.choice(knownnodes.knownNodes[stream].keys())
+        except IndexError:
+            break
         try:
             peer_info = knownnodes.knownNodes[stream][peer]
             if peer_info.get('self'):
