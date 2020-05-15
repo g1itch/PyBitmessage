@@ -268,8 +268,9 @@ class TCPConnection(BMProto, TLSDispatcher):
         self.append_write_buf(
             protocol.assembleVersionMessage(
                 self.destination.host, self.destination.port,
-                connectionpool.BMConnectionPool().streams,
-                False, nodeid=self.nodeid))
+                [self.stream] if self.stream
+                else connectionpool.BMConnectionPool().streams,
+                nodeid=self.nodeid))
         self.connectedAt = time.time()
         receiveDataQueue.put(self.destination)
 
@@ -319,8 +320,9 @@ class Socks5BMConnection(Socks5Connection, TCPConnection):
         self.append_write_buf(
             protocol.assembleVersionMessage(
                 self.destination.host, self.destination.port,
-                connectionpool.BMConnectionPool().streams,
-                False, nodeid=self.nodeid))
+                [self.stream] if self.stream
+                else connectionpool.BMConnectionPool().streams,
+                nodeid=self.nodeid))
         self.set_state("bm_header", expectBytes=protocol.Header.size)
         return True
 

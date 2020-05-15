@@ -299,8 +299,10 @@ class BMConnectionPool(object):
                 for i in range(
                         state.maximumNumberOfHalfOpenConnections - pending):
                     try:
+                        target_stream = helper_random.randomchoice(
+                            list(self.streams))
                         chosen = self.trustedPeer or chooseConnection(
-                            helper_random.randomchoice(list(self.streams)))
+                            target_stream)
                     except (ValueError, IndexError):
                         continue
                     if chosen in self.outboundConnections:
@@ -327,15 +329,18 @@ class BMConnectionPool(object):
                     try:
                         if chosen.host.endswith(".onion") and Proxy.onion_proxy:
                             if onionsocksproxytype == "SOCKS5":
-                                self.addConnection(Socks5BMConnection(chosen))
+                                proto = Socks5BMConnection(chosen)
                             elif onionsocksproxytype == "SOCKS4a":
-                                self.addConnection(Socks4aBMConnection(chosen))
+                                proto = Socks4aBMConnection(chosen)
                         elif socksproxytype == "SOCKS5":
-                            self.addConnection(Socks5BMConnection(chosen))
+                            proto = Socks5BMConnection(chosen)
                         elif socksproxytype == "SOCKS4a":
-                            self.addConnection(Socks4aBMConnection(chosen))
+                            proto = Socks4aBMConnection(chosen)
                         else:
-                            self.addConnection(TCPConnection(chosen))
+                            proto = TCPConnection(chosen)
+
+                        proto.stream = target_stream
+                        self.addConnection(proto)
                     except socket.error as e:
                         if e.errno == errno.ENETUNREACH:
                             continue
