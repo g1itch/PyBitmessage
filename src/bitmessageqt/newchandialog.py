@@ -21,10 +21,10 @@ class NewChanDialog(QtWidgets.QDialog):
         self.parent = parent
         self.chanAddress.setValidator(AddressValidator(
             self.chanAddress, self.chanPassPhrase, self.validatorFeedback,
-            self.buttonBox, False))
+            self.buttonBox.button(QtWidgets.QDialogButtonBox.Ok), False))
         self.chanPassPhrase.setValidator(PassPhraseValidator(
             self.chanPassPhrase, self.chanAddress, self.validatorFeedback,
-            self.buttonBox, False))
+            self.buttonBox.button(QtWidgets.QDialogButtonBox.Ok), False))
 
         self.timer = QtCore.QTimer()
         self.timer.timeout.connect(self.delayedUpdateStatus)
@@ -41,17 +41,16 @@ class NewChanDialog(QtWidgets.QDialog):
         self.timer.stop()
         self.hide()
         apiAddressGeneratorReturnQueue.queue.clear()
+        passPhrase = self.chanPassPhrase.text().encode('utf-8')
         if self.chanAddress.text() == "":
             addressGeneratorQueue.put((
                 'createChan', 4, 1,
-                str_chan + ' ' + str(self.chanPassPhrase.text()),
-                self.chanPassPhrase.text(), True
+                str_chan + ' ' + passPhrase, passPhrase, True
             ))
         else:
             addressGeneratorQueue.put((
                 'joinChan', addBMIfNotPresent(self.chanAddress.text()),
-                str_chan + ' ' + str(self.chanPassPhrase.text()),
-                self.chanPassPhrase.text(), True
+                str_chan + ' ' + passPhrase, passPhrase, True
             ))
         addressGeneratorReturnValue = apiAddressGeneratorReturnQueue.get(True)
         if (len(addressGeneratorReturnValue) > 0
@@ -62,7 +61,7 @@ class NewChanDialog(QtWidgets.QDialog):
                 _translate(
                     "newchandialog",
                     "Successfully created / joined chan {0}"
-                ).format(self.chanPassPhrase.text())
+                ).format(passPhrase)
             ))
             self.parent.ui.tabWidget.setCurrentIndex(
                 self.parent.ui.tabWidget.indexOf(self.parent.ui.chans)
