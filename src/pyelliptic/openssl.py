@@ -758,6 +758,8 @@ def loadOpenSSL():
                     environ['RESOURCEPATH'], '..',
                     'Frameworks', 'libcrypto.0.9.8.dylib'),
             ])
+        elif not getattr(sys, '_MEIPASS', None):
+            pass
         elif 'win32' in sys.platform or 'win64' in sys.platform:
             libdir.append(path.join(sys._MEIPASS, 'libeay32.dll'))
         else:

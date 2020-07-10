@@ -7,10 +7,11 @@ import socket
 import ssl
 import sys
 
-import network.asyncore_pollchoose as asyncore
-import paths
-from network.advanceddispatcher import AdvancedDispatcher
-from queues import receiveDataQueue
+import asyncore_pollchoose as asyncore
+from pybitmessage import paths
+from pybitmessage.queues import receiveDataQueue
+from advanceddispatcher import AdvancedDispatcher
+
 
 logger = logging.getLogger('default')
 
@@ -47,14 +48,15 @@ class TLSDispatcher(AdvancedDispatcher):
     def __init__(self, _=None, sock=None, certfile=None, keyfile=None,
                  server_side=False, ciphers=sslProtocolCiphers):
         self.want_read = self.want_write = True
-        if certfile is None:
+        code_path = paths.codePath()
+        if certfile is None and code_path:
             self.certfile = os.path.join(
-                paths.codePath(), 'sslkeys', 'cert.pem')
+                code_path, 'sslkeys', 'cert.pem')
         else:
             self.certfile = certfile
-        if keyfile is None:
+        if keyfile is None and code_path:
             self.keyfile = os.path.join(
-                paths.codePath(), 'sslkeys', 'key.pem')
+                code_path, 'sslkeys', 'key.pem')
         else:
             self.keyfile = keyfile
         self.server_side = server_side

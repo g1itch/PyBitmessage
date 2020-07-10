@@ -76,10 +76,13 @@ def codePath():
     """Returns path to the program sources"""
     if not frozen:
         return os.path.dirname(__file__)
-    return (
-        os.environ.get('RESOURCEPATH')
-        # pylint: disable=protected-access
-        if frozen == "macosx_app" else sys._MEIPASS)
+    if frozen == "macosx_app":
+        return os.getenv('RESOURCEPATH')
+    else:
+        try:  # pylint: disable=protected-access
+            return sys._MEIPASS
+        except AttributeError:
+            return None
 
 
 def tail(f, lines=20):
