@@ -1,6 +1,6 @@
 import logging
 
-from messagetypes import MsgBase
+from _base import MsgBase
 
 logger = logging.getLogger('default')
 
