@@ -3,9 +3,9 @@ import os
 
 from qtpy import QtGui
 
-import state
-from addresses import addBMIfNotPresent
-from bmconfigparser import BMConfigParser
+from pybitmessage import state
+from pybitmessage.addresses import addBMIfNotPresent
+from pybitmessage.bmconfigparser import BMConfigParser
 
 str_broadcast_subscribers = '[Broadcast subscribers]'
 str_chan = '[chan]'

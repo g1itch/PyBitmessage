@@ -1,8 +1,9 @@
-from qtpy import QtCore
 import sys
 
-import queues
-from network.node import Peer
+from qtpy import QtCore
+
+from pybitmessage import queues
+from pybitmessage.network.node import Peer
 
 
 class UISignaler(QtCore.QThread):

@@ -8,15 +8,15 @@ import hashlib
 
 from qtpy import QtGui, QtWidgets
 
-import queues
 import widgets
+from pybitmessage import queues
+from pybitmessage.addresses import decodeAddress, encodeVarint, addBMIfNotPresent
+from pybitmessage.inventory import Inventory
+from pybitmessage.tr import _translate
 from account import (
     GatewayAccount, MailchuckAccount, AccountMixin, accountClass,
     getSortedAccounts
 )
-from addresses import decodeAddress, encodeVarint, addBMIfNotPresent
-from inventory import Inventory
-from tr import _translate
 
 
 class AddressCheckMixin(object):

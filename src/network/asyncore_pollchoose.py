@@ -19,7 +19,7 @@ from errno import (
 )
 from threading import current_thread
 
-import helper_random
+from pybitmessage import helper_random
 
 try:
     from errno import WSAEWOULDBLOCK

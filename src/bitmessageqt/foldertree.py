@@ -8,10 +8,10 @@ from cgi import escape
 
 from qtpy import QtCore, QtGui, QtWidgets
 
-from bmconfigparser import BMConfigParser
-from helper_sql import sqlExecute, sqlQuery
+from pybitmessage.bmconfigparser import BMConfigParser
+from pybitmessage.helper_sql import sqlExecute, sqlQuery
+from pybitmessage.tr import _translate
 from settingsmixin import SettingsMixin
-from tr import _translate
 from utils import avatarize
 
 # for pylupdate

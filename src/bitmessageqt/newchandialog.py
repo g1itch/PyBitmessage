@@ -5,11 +5,11 @@ NewChanDialog class definition
 from qtpy import QtCore, QtWidgets
 
 import widgets
-from addresses import addBMIfNotPresent
-from addressvalidator import AddressValidator, PassPhraseValidator
-from queues import (
+from pybitmessage.addresses import addBMIfNotPresent
+from pybitmessage.queues import (
     addressGeneratorQueue, apiAddressGeneratorReturnQueue, UISignalQueue)
-from tr import _translate
+from pybitmessage.tr import _translate
+from addressvalidator import AddressValidator, PassPhraseValidator
 from utils import str_chan
 
 

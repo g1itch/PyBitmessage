@@ -6,15 +6,12 @@ import time
 
 from qtpy import QtCore, QtGui, QtWidgets
 
-import knownnodes
-import l10n
-import network.stats
-import state
 import widgets
-from inventory import Inventory
-from network import BMConnectionPool
+from pybitmessage import l10n, state
+from pybitmessage.inventory import Inventory
+from pybitmessage.network import BMConnectionPool, knownnodes, stats
+from pybitmessage.tr import _translate
 from retranslateui import RetranslateMixin
-from tr import _translate
 from uisignaler import UISignaler
 
 
@@ -79,7 +76,7 @@ class NetworkStatus(QtWidgets.QWidget, RetranslateMixin):
         """Update the counter for number of objects to be synced"""
         self.labelSyncStatus.setText(_translate(
             "networkstatus", "Object(s) to be synced: %n", None,
-            network.stats.pendingDownload() + network.stats.pendingUpload()))
+            stats.pendingDownload() + stats.pendingUpload()))
 
     def updateNumberOfMessagesProcessed(self):
         """Update the counter for number of processed messages"""
@@ -109,13 +106,13 @@ class NetworkStatus(QtWidgets.QWidget, RetranslateMixin):
         """
         self.labelBytesRecvCount.setText(_translate(
             "networkstatus", "Down: {0}/s  Total: {1}").format(
-                self.formatByteRate(network.stats.downloadSpeed()),
-                self.formatBytes(network.stats.receivedBytes())
+                self.formatByteRate(stats.downloadSpeed()),
+                self.formatBytes(stats.receivedBytes())
         ))
         self.labelBytesSentCount.setText(_translate(
             "networkstatus", "Up: {0}/s  Total: {1}").format(
-                self.formatByteRate(network.stats.uploadSpeed()),
-                self.formatBytes(network.stats.sentBytes())
+                self.formatByteRate(stats.uploadSpeed()),
+                self.formatBytes(stats.sentBytes())
         ))
 
     def updateNetworkStatusTab(self, outbound, add, destination):

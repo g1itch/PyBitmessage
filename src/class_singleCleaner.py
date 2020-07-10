@@ -23,7 +23,7 @@ import gc
 import os
 import time
 
-import knownnodes
+from network import knownnodes
 import queues
 import state
 import tr

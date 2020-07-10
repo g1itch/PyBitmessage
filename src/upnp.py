@@ -12,7 +12,7 @@ from random import randint
 from urlparse import urlparse
 from xml.dom.minidom import Document, parseString
 
-import knownnodes
+from network import knownnodes
 import queues
 import state
 import tr

@@ -9,20 +9,15 @@ import tempfile
 
 from qtpy import QtCore, QtGui, QtWidgets
 
-import debug
-import defaults
-import knownnodes
-import namecoin
-import openclpow
-import paths
-import queues
-import state
 import widgets
-from bmconfigparser import BMConfigParser
-from helper_sql import sqlExecute, sqlStoredProcedure
-from helper_startup import start_proxyconfig
-from network.asyncore_pollchoose import set_rates
-from tr import _translate
+from pybitmessage import (
+    debug, defaults, namecoin, openclpow, paths, queues, state)
+from pybitmessage.bmconfigparser import BMConfigParser
+from pybitmessage.helper_sql import sqlExecute, sqlStoredProcedure
+from pybitmessage.helper_startup import start_proxyconfig
+from pybitmessage.network import knownnodes
+from pybitmessage.network.asyncore_pollchoose import set_rates
+from pybitmessage.tr import _translate
 
 
 def getSOCKSProxyType(config):

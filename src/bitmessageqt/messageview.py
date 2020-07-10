@@ -6,8 +6,8 @@ zoom and URL click warning popup.
 
 from qtpy import QtCore, QtGui, QtWidgets
 
+from pybitmessage.tr import _translate
 from safehtmlparser import SafeHTMLParser
-from tr import _translate
 
 
 class MessageView(QtWidgets.QTextBrowser):

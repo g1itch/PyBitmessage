@@ -7,8 +7,8 @@ import socket
 import time
 
 import asyncore_pollchoose as asyncore
+from pybitmessage.bmconfigparser import BMConfigParser
 from advanceddispatcher import AdvancedDispatcher
-from bmconfigparser import BMConfigParser
 from node import Peer
 
 logger = logging.getLogger('default')

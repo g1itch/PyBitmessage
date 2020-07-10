@@ -7,21 +7,17 @@ import sys
 import time
 
 import account
-import defaults
-import network.stats
-import paths
-import proofofwork
-import queues
-import state
-from bmconfigparser import BMConfigParser
+from pybitmessage import defaults, paths, proofofwork, queues, state
+from pybitmessage.bmconfigparser import BMConfigParser
+from pybitmessage.helper_sql import sqlExecute, sqlQuery
+from pybitmessage.l10n import getTranslationLanguage
+from pybitmessage.network import stats
+from pybitmessage.openclpow import openclEnabled
+from pybitmessage.pyelliptic.openssl import OpenSSL
+from pybitmessage.tr import _translate
+from pybitmessage.version import softwareVersion
 from foldertree import AccountMixin
-from helper_sql import sqlExecute, sqlQuery
-from l10n import getTranslationLanguage
-from openclpow import openclEnabled
-from pyelliptic.openssl import OpenSSL
 from settings import getSOCKSProxyType
-from tr import _translate
-from version import softwareVersion
 
 
 # this is BM support address going to Peter Surda
@@ -157,7 +153,7 @@ def createSupportMessage(myapp):
     locale = getTranslationLanguage()
     socks = getSOCKSProxyType(BMConfigParser()) or 'N/A'
     upnp = BMConfigParser().safeGet('bitmessagesettings', 'upnp', 'N/A')
-    connectedhosts = len(network.stats.connectedHostsList())
+    connectedhosts = len(stats.connectedHostsList())
 
     myapp.ui.textEditMessage.setText(SUPPORT_MESSAGE.format(
         version, osname, architecture, pythonversion, opensslversion, qtapi,

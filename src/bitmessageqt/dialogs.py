@@ -4,8 +4,11 @@ All dialogs are available in this module.
 
 from qtpy import QtWidgets
 
-import paths
+
 import widgets
+from pybitmessage import paths
+from pybitmessage.tr import _translate
+from pybitmessage.version import softwareVersion
 from address_dialogs import (
     AddAddressDialog, EmailGatewayDialog, NewAddressDialog,
     NewSubscriptionDialog, RegenerateAddressesDialog,
@@ -13,8 +16,7 @@ from address_dialogs import (
 )
 from newchandialog import NewChanDialog
 from settings import SettingsDialog
-from tr import _translate
-from version import softwareVersion
+
 
 __all__ = [
     "NewChanDialog", "AddAddressDialog", "NewAddressDialog",

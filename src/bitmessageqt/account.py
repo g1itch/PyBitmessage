@@ -8,14 +8,14 @@ import re
 import sys
 import time
 
-import queues
-from addresses import decodeAddress
-from bmconfigparser import BMConfigParser
-from helper_ackPayload import genAckPayload
-from helper_sql import sqlQuery, sqlExecute
+from pybitmessage import queues
+from pybitmessage.addresses import decodeAddress
+from pybitmessage.bmconfigparser import BMConfigParser
+from pybitmessage.helper_ackPayload import genAckPayload
+from pybitmessage.helper_sql import sqlQuery, sqlExecute
+from pybitmessage.tr import _translate
 from foldertree import AccountMixin
 from utils import str_broadcast_subscribers
-from tr import _translate
 
 
 def getSortedAccounts():

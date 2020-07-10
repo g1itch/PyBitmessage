@@ -5,9 +5,9 @@ import os
 
 from qtpy import QtCore, QtWidgets
 
-import paths
-from bmconfigparser import BMConfigParser
-from tr import _translate
+from pybitmessage import paths
+from pybitmessage.bmconfigparser import BMConfigParser
+from pybitmessage.tr import _translate
 
 
 class LanguageBox(QtWidgets.QComboBox):

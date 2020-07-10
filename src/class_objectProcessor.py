@@ -17,7 +17,7 @@ import helper_inbox
 import helper_msgcoding
 import helper_sent
 import highlevelcrypto
-import knownnodes
+from network import knownnodes
 import l10n
 import protocol
 import queues

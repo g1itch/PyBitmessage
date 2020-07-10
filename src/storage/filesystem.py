@@ -7,7 +7,7 @@ from binascii import hexlify, unhexlify
 from os import listdir, makedirs, path, remove, rmdir
 from threading import RLock
 
-from paths import lookupAppdataFolder
+from pybitmessage.paths import lookupAppdataFolder
 from storage import InventoryItem, InventoryStorage
 
 

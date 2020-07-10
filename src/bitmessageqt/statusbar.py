@@ -1,5 +1,6 @@
-from qtpy import QtWidgets
 from time import time
+
+from qtpy import QtWidgets
 
 
 class BMStatusBar(QtWidgets.QStatusBar):

@@ -6,10 +6,9 @@ import logging
 import random  # nosec
 
 import knownnodes
-import protocol
-import state
-from bmconfigparser import BMConfigParser
-from queues import Queue, portCheckerQueue
+from pybitmessage import protocol, state
+from pybitmessage.bmconfigparser import BMConfigParser
+from pybitmessage.queues import Queue, portCheckerQueue
 
 logger = logging.getLogger('default')
 

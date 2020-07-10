@@ -1,15 +1,17 @@
 # pylint: skip-file
 # flake8: noqa
 
+
 from qtpy import QtCore, QtGui, QtWidgets
-from tr import _translate
-from bmconfigparser import BMConfigParser
+
+import settingsmixin
+from pybitmessage.bmconfigparser import BMConfigParser
+from pybitmessage.tr import _translate
+from blacklist import Blacklist
 from foldertree import AddressBookCompleter
 from messageview import MessageView
 from messagecompose import MessageCompose
-import settingsmixin
 from networkstatus import NetworkStatus
-from blacklist import Blacklist
 
 import bitmessage_icons_rc
 

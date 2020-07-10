@@ -1,5 +1,6 @@
 from qtpy import QtCore, QtWidgets
-from tr import _translate
+
+from pybitmessage.tr import _translate
 
 
 class MessageCompose(QtWidgets.QTextEdit):

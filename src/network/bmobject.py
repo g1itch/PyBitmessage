@@ -4,11 +4,10 @@ BMObject and it's exceptions.
 import logging
 import time
 
-import protocol
-import state
-from addresses import calculateInventoryHash
-from inventory import Inventory
-from network.dandelion import Dandelion
+from pybitmessage import protocol, state
+from pybitmessage.addresses import calculateInventoryHash
+from pybitmessage.inventory import Inventory
+from dandelion import Dandelion
 
 logger = logging.getLogger('default')
 

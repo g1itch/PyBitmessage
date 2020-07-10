@@ -7,10 +7,11 @@ from Queue import Empty
 
 from qtpy import QtGui
 
-from addresses import decodeAddress, addBMIfNotPresent
+from pybitmessage.addresses import decodeAddress, addBMIfNotPresent
+from pybitmessage.queues import (
+    apiAddressGeneratorReturnQueue, addressGeneratorQueue)
+from pybitmessage.tr import _translate
 from account import getSortedAccounts
-from queues import apiAddressGeneratorReturnQueue, addressGeneratorQueue
-from tr import _translate
 from utils import str_chan
 
 

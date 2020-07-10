@@ -5,12 +5,12 @@ import logging
 import socket
 import time
 
-import protocol
-import state
+from pybitmessage import protocol, state
+from pybitmessage.queues import receiveDataQueue
 from bmproto import BMProto
 from node import Peer
 from objectracker import ObjectTracker
-from queues import receiveDataQueue
+
 
 logger = logging.getLogger('default')
 

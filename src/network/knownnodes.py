@@ -9,9 +9,9 @@ import pickle
 import threading
 import time
 
-import state
-from bmconfigparser import BMConfigParser
-from network.node import Peer
+from pybitmessage import state
+from pybitmessage.bmconfigparser import BMConfigParser
+from node import Peer
 
 knownNodesLock = threading.Lock()
 """Thread lock for knownnodes modification"""

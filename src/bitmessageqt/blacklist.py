@@ -1,13 +1,13 @@
 from qtpy import QtCore, QtGui, QtWidgets
 
 import widgets
-from addresses import addBMIfNotPresent
-from bmconfigparser import BMConfigParser
+from pybitmessage.addresses import addBMIfNotPresent
+from pybitmessage.bmconfigparser import BMConfigParser
+from pybitmessage.helper_sql import sqlExecute, sqlQuery
+from pybitmessage.queues import UISignalQueue
+from pybitmessage.tr import _translate
 from dialogs import AddAddressDialog
-from helper_sql import sqlExecute, sqlQuery
-from queues import UISignalQueue
 from retranslateui import RetranslateMixin
-from tr import _translate
 from uisignaler import UISignaler
 from utils import avatarize
 

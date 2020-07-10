@@ -4,7 +4,7 @@ Network statistics
 import time
 
 import asyncore_pollchoose as asyncore
-from network.connectionpool import BMConnectionPool
+from connectionpool import BMConnectionPool
 from objectracker import missingObjects
 
 

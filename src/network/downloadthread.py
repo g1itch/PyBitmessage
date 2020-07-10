@@ -3,12 +3,10 @@
 """
 import time
 
-import addresses
-import helper_random
-import protocol
 from dandelion import Dandelion
-from inventory import Inventory
-from network.connectionpool import BMConnectionPool
+from pybitmessage import addresses, helper_random, protocol
+from pybitmessage.inventory import Inventory
+from connectionpool import BMConnectionPool
 from objectracker import missingObjects
 from threads import StoppableThread
 

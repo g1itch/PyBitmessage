@@ -12,11 +12,7 @@ The PyBitmessage startup script
 import os
 import sys
 
-app_dir = os.path.dirname(os.path.abspath(__file__))
-os.chdir(app_dir)
-sys.path.insert(0, app_dir)
-
-
+import encodings  # noqa:F401 for pyqtdeploy
 import depends
 depends.check_dependencies()
 
@@ -40,7 +36,7 @@ from debug import logger  # this should go before any threads
 from helper_startup import (
     adjustHalfOpenConnectionsLimit, start_proxyconfig)
 from inventory import Inventory
-from knownnodes import readKnownNodes
+from network.knownnodes import readKnownNodes
 # Network objects and threads
 from network import (
     BMConnectionPool, Dandelion, AddrThread, AnnounceThread, BMNetworkThread,
@@ -51,6 +47,9 @@ from singleinstance import singleinstance
 from threads import (
     set_thread_name, printLock,
     addressGenerator, objectProcessor, singleCleaner, singleWorker, sqlThread)
+
+
+app_dir = os.path.dirname(os.path.abspath(__file__))
 
 
 def _fixSocket():
