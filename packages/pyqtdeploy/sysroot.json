@@ -1,0 +1,109 @@
+{
+    "Description": "The sysroot for PyBitmessage.",
+
+    "android|macos|win#openssl": {
+        "android#source":   "openssl-1.1.0l.tar.gz",
+        "macos|win#source": "openssl-1.0.2t.tar.gz",
+        "win#no_asm":       true
+    },
+
+    "linux|macos|win#zlib": {
+        "source":               "zlib-1.2.11.tar.gz",
+        "static_msvc_runtime":  true
+    },
+
+    "libffi": {
+	"source": "libffi-3.3.tar.gz"
+    },
+
+    "qt5": {
+        "android-32#qt_dir":        "android_armv7",
+        "android-64#qt_dir":        "android_arm64_v8a",
+        "ios#qt_dir":               "ios",
+
+        "linux|macos|win#source":   "qt-everywhere-src-5.12.2.tar.xz",
+        "edition":                  "opensource",
+
+        "android|linux#ssl":        "openssl-runtime",
+        "ios#ssl":                  "securetransport",
+        "macos|win#ssl":            "openssl-linked",
+
+        "configure_options":        [
+            "-no-gif", "-qt-libpng", "-qt-libjpeg",
+	    "-no-dbus", "-no-cups", "-fontconfig",
+            "-qt-harfbuzz", "-qt-pcre", "-no-sql-db2",
+            "-no-sql-ibase", "-no-sql-mysql", "-no-sql-sqlite",
+            "-no-sql-sqlite2", "-no-sql-oci", "-no-sql-odbc",
+            "-no-sql-psql", "-no-sql-tds", "-qt-sqlite", "-ccache"
+        ],
+        "skip":                     [
+            "qt3d", "qtactiveqt", "qtcanvas3d",
+            "qtcharts", "qtdatavis3d", "qtdeclarative",
+            "qtdoc", "qtgamepad", "qtgraphicaleffects", "qtlocation",
+            "qtpurchasing", "qtquickcontrols", "qtquickcontrols2",
+            "qtscript", "qtscxml", "qtsensors", "qtserialbus",
+            "qtserialport", "qtspeech", "qtsvg", "qttools",
+            "qtvirtualkeyboard", "qtwayland",
+            "qtwebchannel", "qtwebengine", "qtwebglplugin",
+            "qtwebsockets", "qtwebview", "qtxmlpatterns"
+        ],
+
+        "disabled_features": [
+            "concurrent", "future",
+            "cups", "printer", "printdialog", "printpreviewdialog",
+            "printpreviewwidget", "sql", "sqlmodel", "testlib"
+        ],
+
+        "static_msvc_runtime":      true
+    },
+
+    "python": {
+        "build_host_from_source":   false,
+        "build_target_from_source": true,
+	"dynamic_loading": true,
+        "source":                   "Python-2.7.18.tar.xz"
+    },
+
+    "sip": {
+        "module_name":  "PyQt5.sip",
+        "source":       "sip-4.19.23.tar.gz"
+    },
+
+    "pyqt5": {
+        "android#disabled_features":    [
+            "PyQt_Desktop_OpenGL", "PyQt_Printer", "PyQt_PrintDialog",
+            "PyQt_PrintPreviewDialog", "PyQt_PrintPreviewWidget"
+        ],
+        "android#modules":              [
+            "QtCore", "QtGui", "QtNetwork", "QtWidgets", "QtAndroidExtras"
+        ],
+
+        "ios#disabled_features":        [
+            "PyQt_Desktop_OpenGL", "PyQt_MacOSXOnly",
+            "PyQt_MacCocoaViewContainer", "PyQt_Printer",
+            "PyQt_PrintDialog", "PyQt_PrintPreviewDialog",
+            "PyQt_PrintPreviewWidget", "PyQt_Process",
+            "PyQt_NotBootstrapped"
+        ],
+        "ios|macos#modules":            [
+            "QtCore", "QtGui", "QtNetwork", "QtWidgets", "QtMacExtras"
+	],
+
+        "linux#disabled_features": [
+            "PyQt_Desktop_OpenGL", "PyQt_Printer", "PyQt_PrintDialog",
+            "PyQt_PrintPreviewDialog", "PyQt_PrintPreviewWidget"
+        ],
+	"linux#modules":                [
+            "QtCore", "QtGui", "QtNetwork", "QtWidgets", "QtXml",
+	    "QtX11Extras"
+        ],
+
+        "win#disabled_features":        ["PyQt_Desktop_OpenGL"],
+        "win#modules":                  [
+            "QtCore", "QtGui", "QtNetwork", "QtWidgets", "QtWinExtras"
+        ],
+
+        "source": "PyQt5-5.13.2.tar.gz"
+    }
+
+}
