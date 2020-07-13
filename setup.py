@@ -144,11 +144,11 @@ if __name__ == "__main__":
             'bitmessage.proxyconfig': [
                 'stem = pybitmessage.plugins.proxyconfig_stem [tor]'
             ],
-            # 'console_scripts': [
-            #        'pybitmessage = pybitmessage.bitmessagemain:main'
-            # ]
+            'console_scripts': [
+                'pybitmessage = pybitmessage.bitmessagemain:main'
+            ]
         },
-        scripts=['src/pybitmessage'],
+        # scripts=['src/pybitmessage'],
         cmdclass={'install': InstallCmd},
         command_options={
             'build_sphinx': {
