@@ -1061,7 +1061,7 @@
   <customwidget>
    <class>LanguageBox</class>
    <extends>QComboBox</extends>
-   <header>bitmessageqt.languagebox</header>
+   <header>pybitmessage.bitmessageqt.languagebox</header>
   </customwidget>
   </customwidgets>
  <tabstops>

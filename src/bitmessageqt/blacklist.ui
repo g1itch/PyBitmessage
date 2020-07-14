@@ -101,7 +101,7 @@
   <customwidget>
    <class>STableWidget</class>
    <extends>QTableWidget</extends>
-   <header>bitmessageqt.settingsmixin</header>
+   <header>pybitmessage.bitmessageqt.settingsmixin</header>
   </customwidget>
  </customwidgets>
  <resources>
