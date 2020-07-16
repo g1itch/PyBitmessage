@@ -48,7 +48,7 @@ from utils import str_broadcast_subscribers, avatarize
 import bitmessage_icons_rc  # noqa:F401 pylint: disable=unused-import
 
 try:
-    from plugins.plugin import get_plugin, get_plugins
+    from pybitmessage.plugins.plugin import get_plugin, get_plugins
 except ImportError:
     get_plugins = False
 
@@ -1406,6 +1406,7 @@ class MyForm(settingsmixin.SMainWindow):
         self._notifier = _simple_notify
 
         if not get_plugins:
+            self._theme_player = None
             return
 
         _plugin = get_plugin('notification.message')
