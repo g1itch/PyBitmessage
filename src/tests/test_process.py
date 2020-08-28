@@ -3,6 +3,7 @@ Common reusable code for tests and tests for pybitmessage process.
 """
 
 import os
+import sys
 import signal
 import subprocess  # nosec
 import tempfile
@@ -15,7 +16,7 @@ import psutil
 def put_signal_file(path, filename):
     """Creates file, presence of which is a signal about some event."""
     with open(os.path.join(path, filename), 'wb') as outfile:
-        outfile.write(str(time.time()))
+        outfile.write(b'%i' % time.time())
 
 
 class TestProcessProto(unittest.TestCase):
@@ -32,12 +33,23 @@ class TestProcessProto(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         """Setup environment and start pybitmessage"""
+        cls.flag = False
         cls.home = os.environ['BITMESSAGE_HOME'] = tempfile.gettempdir()
         put_signal_file(cls.home, 'unittest.lock')
-        subprocess.call(cls._process_cmd)  # nosec
+        subprocess.Popen(
+            cls._process_cmd,
+            stdout=subprocess.PIPE, stderr=subprocess.STDOUT)  # nosec
         time.sleep(5)
-        cls.pid = int(cls._get_readline('singleton.lock'))
+        try:
+            cls.pid = int(cls._get_readline('singleton.lock'))
+        except TypeError:
+            cls.flag = True
+            return
         cls.process = psutil.Process(cls.pid)
+
+    def setUp(self):
+        if self.flag:
+            self.fail("%s is not started ):" % self._process_cmd)
 
     @classmethod
     def _get_readline(cls, pfile):
@@ -71,7 +83,7 @@ class TestProcessProto(unittest.TestCase):
             if not cls._stop_process():
                 print(open(os.path.join(cls.home, 'debug.log'), 'rb').read())
                 cls.process.kill()
-        except psutil.NoSuchProcess:
+        except (psutil.NoSuchProcess, AttributeError):
             pass
         finally:
             cls._cleanup_files()
@@ -115,6 +127,7 @@ class TestProcessShutdown(TestProcessProto):
 
 class TestProcess(TestProcessProto):
     """A test case for pybitmessage process"""
+    @unittest.skipIf(sys.platform[:5] != 'linux', 'brobably needs prctl')
     def test_process_name(self):
         """Check PyBitmessage process name"""
         self.assertEqual(self.process.name(), 'PyBitmessage')
@@ -129,6 +142,7 @@ class TestProcess(TestProcessProto):
                 'Failed to read file %s' % pfile
             )
 
+    @unittest.skipIf(sys.platform[:5] != 'linux', 'prctl is only for linux')
     def test_threads(self):
         """Testing PyBitmessage threads"""
         self._test_threads()

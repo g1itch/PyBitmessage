@@ -4,10 +4,15 @@ Testing the logger configuration
 
 import logging
 import os
+import sys
 import tempfile
 import unittest
 
 
+@unittest.skipIf(
+    sys.platform[:5] != 'linux'
+    or os.getenv('TRAVIS_DIST') not in (None, 'xenial'),
+    'appdata confusion')
 class TestLogger(unittest.TestCase):
     """A test case for bmconfigparser"""
 
@@ -28,7 +33,7 @@ format=%(asctime)s {1} %(message)s
 class=FileHandler
 level=NOTSET
 formatter=default
-args=('{0}', 'w')
+args=({0!r}, 'w')
 
 [logger_root]
 level=DEBUG

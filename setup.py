@@ -41,18 +41,30 @@ class InstallCmd(install):
 
 
 if __name__ == "__main__":
+    import sys
+
     here = os.path.abspath(os.path.dirname(__file__))
     with open(os.path.join(here, 'README.md')) as f:
         README = f.read()
 
-    with open(os.path.join(here, 'requirements.txt'), 'r') as f:
-        requirements = list(f.readlines())
+    if sys.platform[:5] == 'linux':
+        with open(os.path.join(here, 'requirements.txt'), 'r') as f:
+            requirements = list(f.readlines())
+    else:
+        requirements = []
 
     bitmsghash = Extension(
         'pybitmessage.bitmsghash.bitmsghash',
         sources=['src/bitmsghash/bitmsghash.cpp'],
         libraries=['pthread', 'crypto'],
     )
+
+    if sys.platform[:3] == 'win':
+        bitmsghash.libraries = ['libeay32', 'ws2_32']
+        openssl_dir = os.getenv('OPENSSL_DIR')
+        if openssl_dir:
+            bitmsghash.library_dirs = [os.path.join(openssl_dir, 'lib')]
+            bitmsghash.include_dirs = [os.path.join(openssl_dir, 'include')]
 
     installRequires = []
     packages = [
@@ -80,6 +92,10 @@ if __name__ == "__main__":
             installRequires.append("umsgpack")
         except ImportError:
             packages += ['pybitmessage.fallback.umsgpack']
+
+    keys_conditional = {}
+    if sys.hexversion > 0x30300F0:
+        keys_conditional['test_suite'] = 'pybitmessage.tests'
 
     dist = setup(
         name='pybitmessage',
@@ -113,11 +129,11 @@ if __name__ == "__main__":
             'images/*.png', 'images/*.ico', 'images/*.icns'
         ]},
         data_files=[
-            ('share/applications/',
+            ('share/applications',
                 ['desktop/pybitmessage.desktop']),
-            ('share/icons/hicolor/scalable/apps/',
+            ('share/icons/hicolor/scalable/apps',
                 ['desktop/icons/scalable/pybitmessage.svg']),
-            ('share/icons/hicolor/24x24/apps/',
+            ('share/icons/hicolor/24x24/apps',
                 ['desktop/icons/24x24/pybitmessage.png'])
         ],
         ext_modules=[bitmsghash],
@@ -144,14 +160,15 @@ if __name__ == "__main__":
             'bitmessage.proxyconfig': [
                 'stem = pybitmessage.plugins.proxyconfig_stem [tor]'
             ],
-            # 'console_scripts': [
-            #        'pybitmessage = pybitmessage.bitmessagemain:main'
-            # ]
+            'console_scripts': [
+                'pybitmessage = pybitmessage.bitmessagemain:main'
+            ] if sys.platform[:3] == 'win' else []
         },
         scripts=['src/pybitmessage'],
         cmdclass={'install': InstallCmd},
         command_options={
             'build_sphinx': {
                 'source_dir': ('setup.py', 'docs')}
-        }
+        },
+        **keys_conditional
     )
