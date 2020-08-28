@@ -56,7 +56,11 @@ install:
   - python setup.py install
 script:
   - python checkdeps.py
-  - xvfb-run src/bitmessagemain.py -t
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+    xvfb-run src/bitmessagemain.py -t;
+    else
+    python src/bitmessagemain.py -t;
+    fi
   - python setup.py test
 before_deploy:
   - sudo apt-get install -yq python-stdeb fakeroot python-all-dev dh-python debhelper libssl-dev wine-stable winetricks wine32 wine64 mingw-w64 xvfb
