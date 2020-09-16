@@ -19,7 +19,8 @@ BMConfigDefaults = {
         "maxtotalconnections": 200,
         "maxuploadrate": 0,
         "apiinterface": "127.0.0.1",
-        "apiport": 8442
+        "apiport": 8442,
+        "udp": True
     },
     "threads": {
         "receive": 3,
