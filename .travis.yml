@@ -1,4 +1,5 @@
 language: python
+dist: bionic
 python:
   - "2.7"
   - "3.6"
@@ -7,7 +8,6 @@ addons:
     packages:
       - build-essential
       - libcap-dev
-      - python-qt4
       - tor
       - xvfb
 jobs:
@@ -16,9 +16,9 @@ jobs:
     - os: windows
   include:
     - os: linux
-      dist: xenial
-    - os: linux
       dist: bionic
+    - os: linux
+      dist: focal
     - os: osx
       if: tag IS present
       language: generic
@@ -38,7 +38,6 @@ jobs:
         - PATH=/c/Python27:/c/Python27/Scripts:$PATH
         - OPENSSL_DIR="c:\\OpenSSL-Win64"
     - stage: deploy
-      dist: bionic
       script: skip
       deploy:
         provider: releases
@@ -55,7 +54,9 @@ jobs:
           tags: true
 install:
   - pip install -r requirements.txt
-  - python setup.py install
+  - if [[ "$TRAVIS_DIST" == "bionic" ]]; then
+    sudo apt-get install -yq python-qt4;
+    fi
   - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then
     pip install -I pyinstaller==3.6;
     python setup.py build_ext --inplace;
