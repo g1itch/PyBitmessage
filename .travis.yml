@@ -1,26 +1,22 @@
 language: python
+dist: bionic
+cache: pip
 python:
   - "2.7"
-  - "3.6"
+  - "2.7_with_system_site_packages"
 addons:
   apt:
     packages:
       - build-essential
       - libcap-dev
       - python-qt4
-      - tor
       - xvfb
 jobs:
   allow_failures:
-    - python: "3.6"
     - os: windows
   include:
-    - os: linux
-      dist: xenial
-    - os: linux
-      dist: bionic
+    - dist: xenial
     - os: osx
-      if: tag IS present
       language: generic
     - os: windows
       language: shell
@@ -33,22 +29,6 @@ jobs:
       env:
         - PATH=/c/Python27:/c/Python27/Scripts:$PATH
         - OPENSSL_DIR="c:\\OpenSSL-Win64"
-    - stage: deploy
-      dist: bionic
-      script: skip
-      deploy:
-        provider: releases
-        token:
-          secure: YOUR_API_KEY_ENCRYPTED
-        file:
-          - dist/pybitmessage-${VERSION}.tar.gz
-          - dist/python-pybitmessage_${VERSION}-1_amd64.deb
-          - dist/Bitmessage_x86_${VERSION}.exe
-          - dist/Bitmessage_x64_${VERSION}.exe
-        cleanup: false
-        draft: true
-        on:
-          tags: true
 install:
   - pip install -r requirements.txt
   - python setup.py install
@@ -60,15 +40,3 @@ script:
     python src/bitmessagemain.py -t;
     fi
   - python setup.py test
-before_deploy:
-  - sudo apt-get install -yq python-stdeb fakeroot python-all-dev dh-python wine-stable winetricks wine32 wine64 mingw-w64 xvfb
-  - python setup.py sdist
-  - export VERSION=$(python setup.py --version)
-  - py2dsc-deb dist/pybitmessage-${VERSION}.tar.gz
-  - mv deb_dist/python-pybitmessage_${VERSION}-1_amd64.deb dist/
-  - export WINDIST=$HOME/build/$TRAVIS_REPO_SLUG/packages/pyinstaller/dist/
-  - xvfb-run buildscripts/winbuild.sh
-  - mv ${WINDIST}/Bitmessage_x64_${VERSION}.exe dist/
-  - xvfb-run i386 buildscripts/winbuild.sh
-  - mv ${WINDIST}/Bitmessage_x86_${VERSION}.exe dist/
-  - ls -hal dist
