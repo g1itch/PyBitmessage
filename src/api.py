@@ -58,19 +58,29 @@ For further examples please reference `.tests.test_api`.
 """
 
 import base64
-import ConfigParser
 import errno
 import hashlib
-import httplib
 import json
 import random  # nosec
 import socket
 import subprocess
 import time
-import xmlrpclib
 from binascii import hexlify, unhexlify
-from SimpleXMLRPCServer import SimpleXMLRPCRequestHandler, SimpleXMLRPCServer
 from struct import pack
+
+try:
+    import httplib
+except ImportError:
+    import http.client as httplib
+try:
+    from xmlrpclib import Fault
+except ImportError:
+    from xmlrpc.client import Fault
+try:
+    from SimpleXMLRPCServer import (
+        SimpleXMLRPCRequestHandler, SimpleXMLRPCServer)
+except ImportError:
+    from xmlrpc.server import SimpleXMLRPCRequestHandler, SimpleXMLRPCServer
 
 import defaults
 import helper_inbox
@@ -88,7 +98,7 @@ from addresses import (
     decodeVarint,
     varintDecodeError
 )
-from bmconfigparser import BMConfigParser
+from bmconfigparser import BMConfigParser, NoSectionError
 from debug import logger
 from helper_ackPayload import genAckPayload
 from helper_sql import SqlBulkExecute, sqlExecute, sqlQuery, sqlStoredProcedure
@@ -163,7 +173,7 @@ class ErrorCodes(type):
         return result
 
 
-class APIError(xmlrpclib.Fault):
+class APIError(Fault):
     """
     APIError exception class
 
@@ -843,7 +853,7 @@ class BMRPCDispatcher(object):
                 ' Use deleteAddress API call instead.')
         try:
             self.config.remove_section(address)
-        except ConfigParser.NoSectionError:
+        except NoSectionError:
             raise APIError(
                 13, 'Could not find this address in your keys.dat file.')
         self.config.save()
@@ -860,7 +870,7 @@ class BMRPCDispatcher(object):
         address = addBMIfNotPresent(address)
         try:
             self.config.remove_section(address)
-        except ConfigParser.NoSectionError:
+        except NoSectionError:
             raise APIError(
                 13, 'Could not find this address in your keys.dat file.')
         self.config.save()

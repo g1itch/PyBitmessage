@@ -35,7 +35,6 @@ Logging is thread-safe so you don't have to worry about locks,
 just import and log.
 """
 
-import ConfigParser
 import logging
 import logging.config
 import os
@@ -43,6 +42,7 @@ import sys
 
 import helper_startup
 import state
+from bmconfigparser import NoSectionError
 
 helper_startup.loadConfig()
 
@@ -74,7 +74,7 @@ def configureLogging():
             False,
             'Loaded logger configuration from %s' % logging_config
         )
-    except (OSError, ConfigParser.NoSectionError):
+    except (OSError, NoSectionError):
         if os.path.isfile(logging_config):
             fail_msg = \
                 'Failed to load logger configuration from %s, using default' \
