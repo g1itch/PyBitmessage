@@ -3,6 +3,8 @@ dist: bionic
 python:
   - "2.7"
   - "3.6"
+services:
+  - docker
 addons:
   apt:
     packages:
@@ -20,6 +22,12 @@ jobs:
       dist: bionic
     - os: linux
       dist: focal
+    - dist: focal
+      language: generic
+      install:
+        - docker build -t bm_fedora -f packages/Dockerfile.fedora .
+      script:
+        - docker run bm_fedora
     - os: osx
       if: tag IS present
       language: generic
