@@ -8,6 +8,7 @@ addons:
   apt:
     packages:
       - build-essential
+      - dante-server
       - libcap-dev
       - python-qt4
       - tor
