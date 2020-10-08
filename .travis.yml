@@ -4,6 +4,8 @@ cache: pip
 python:
   - "2.7"
   - "2.7_with_system_site_packages"
+services:
+  - docker
 addons:
   apt:
     packages:
@@ -16,6 +18,13 @@ jobs:
     - os: windows
   include:
     - dist: xenial
+    - dist: bionic
+      if: type = pull_request
+      language: generic
+      install:
+        - docker build -t bm_fedora -f packages/Dockerfile.fedora .
+      script:
+        - docker run bm_fedora
     - os: osx
       language: generic
     - os: windows
