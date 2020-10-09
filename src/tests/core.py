@@ -248,8 +248,10 @@ def run():
     suite = loader.loadTestsFromTestCase(TestCore)
     try:
         import bitmessageqt.tests
-    except ImportError:
-        pass
+    except ImportError as e:
+        print(
+            'ImportError when tryed to import bitmessageqt.tests: %r'
+            % e)
     else:
         qt_tests = loader.loadTestsFromModule(bitmessageqt.tests)
         suite.addTests(qt_tests)
