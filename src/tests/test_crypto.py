@@ -3,10 +3,17 @@ Test the alternatives for crypto primitives
 """
 
 import hashlib
+import time
 import unittest
 from abc import ABCMeta, abstractmethod
 from binascii import hexlify, unhexlify
+from struct import pack
+
+from pybitmessage import highlevelcrypto, protocol
 from pybitmessage.pyelliptic import arithmetic
+from pybitmessage.addresses import (
+    calculateInventoryHash, decodeAddress, decodeVarint, encodeVarint
+)
 
 try:
     from Crypto.Hash import RIPEMD
@@ -71,14 +78,14 @@ class TestAddresses(unittest.TestCase):
     """Test addresses manipulations"""
     def test_privtopub(self):
         """Generate public keys and check the result"""
+        hexsig = hexlify(sample_pubsigningkey)
+        self.assertEqual(hexsig, arithmetic.privtopub(sample_privatesigningkey))
         self.assertEqual(
-            arithmetic.privtopub(sample_privatesigningkey),
-            hexlify(sample_pubsigningkey)
-        )
+            hexsig, highlevelcrypto.privToPub(sample_privatesigningkey))
+        hexenc = hexlify(sample_pubencryptionkey)
+        self.assertEqual(hexenc, arithmetic.privtopub(sample_privateencryptionkey))
         self.assertEqual(
-            arithmetic.privtopub(sample_privateencryptionkey),
-            hexlify(sample_pubencryptionkey)
-        )
+            hexenc, highlevelcrypto.privToPub(sample_privateencryptionkey))
 
     def test_address(self):
         """Create address and check the result"""
@@ -96,3 +103,47 @@ class TestAddresses(unittest.TestCase):
         self.assertEqual(
             addresses.decodeAddress(sample_address),
             ('success', 2, 1, ripe_hash))
+
+    def test_pubkey(self):
+        """Create and validate the pubkey object"""
+        # Assemble
+        payload = pack('>Q', int(time.time() + 28 * 24 * 3600))
+        payload += '\x00\x00\x00\x01'  # object type: pubkey
+        # address version 3, stream 1
+        payload += encodeVarint(3) + encodeVarint(1)
+        payload += protocol.getBitfield(sample_address)
+        payload += sample_pubsigningkey[1:] + sample_pubencryptionkey[1:]
+        # noncetrialsperbyte, payloadlengthextrabytes
+        diff_parameter = encodeVarint(1000)
+        payload += diff_parameter + diff_parameter
+        signature = highlevelcrypto.sign(payload, sample_privatesigningkey)
+        payload += encodeVarint(len(signature)) + signature
+
+        # Check
+        readPosition = 12
+        readPosition += decodeVarint(
+            payload[readPosition:readPosition + 10])[1]
+        readPosition += decodeVarint(
+            payload[readPosition:readPosition + 10])[1]
+        readPosition += 4
+        pubsigningkey = '\x04' + payload[readPosition:readPosition + 64]
+        self.assertEqual(pubsigningkey, sample_pubsigningkey)
+        readPosition += 64
+        pubencryptionkey = '\x04' + payload[readPosition:readPosition + 64]
+        self.assertEqual(pubencryptionkey, sample_pubencryptionkey)
+        readPosition += 64
+        readPosition += decodeVarint(
+            payload[readPosition:readPosition + 10])[1]
+        readPosition += decodeVarint(
+            payload[readPosition:readPosition + 10])[1]
+        endOfSignedDataPosition = readPosition
+        # Signature
+        signatureLength, signatureLengthLength = decodeVarint(
+            payload[readPosition:readPosition + 10])
+        readPosition += signatureLengthLength
+        signature = payload[readPosition:readPosition + signatureLength]
+        self.assertTrue(
+            highlevelcrypto.verify(
+                payload[:endOfSignedDataPosition],
+                signature, hexlify(pubsigningkey))
+        )
