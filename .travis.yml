@@ -63,6 +63,7 @@ jobs:
           tags: true
 install:
   - pip install -r requirements.txt
+  - export VERSION=$(python setup.py --version)
   - if [[ "$TRAVIS_DIST" == "bionic" ]]; then
     sudo apt-get install -yq python-qt4;
     fi
@@ -87,7 +88,6 @@ script:
 before_deploy:
   - sudo apt-get install -yq python-stdeb fakeroot python-all-dev dh-python wine-stable winetricks wine32 wine64 mingw-w64 xvfb
   - python setup.py sdist
-  - export VERSION=$(python setup.py --version)
   - py2dsc-deb dist/pybitmessage-${VERSION}.tar.gz
   - mv deb_dist/python-pybitmessage_${VERSION}-1_amd64.deb dist/
   - export WINDIST=$HOME/build/$TRAVIS_REPO_SLUG/packages/pyinstaller/dist/
