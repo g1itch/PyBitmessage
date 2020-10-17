@@ -36,6 +36,11 @@ sample_ripe = '003cd097eb7f35c87b5dc8b4538c22cb55312a9f'
 # stream: 1, version: 2
 sample_address = 'BM-onkVu1KKL2UaUss5Upg9vXmqd3esTmV79'
 
+sample_time = 1602927067
+sample_sig = unhexlify(
+    '30440220744286c66a885f0d0b30f6b07e5f8c6735fc83a2e87340d37ae90e95793539080'
+    '22065aa3deddcbcd909a10272d7d0ba1f02f5abb358aa55225d4213a67d19f70880')
+
 _sha = hashlib.new('sha512')
 _sha.update(sample_pubsigningkey + sample_pubencryptionkey)
 
@@ -107,7 +112,7 @@ class TestAddresses(unittest.TestCase):
     def test_pubkey(self):
         """Create and validate the pubkey object"""
         # Assemble
-        payload = pack('>Q', int(time.time() + 28 * 24 * 3600))
+        payload = pack('>Q', sample_time + 28 * 24 * 3600)
         payload += '\x00\x00\x00\x01'  # object type: pubkey
         # address version 3, stream 1
         payload += encodeVarint(3) + encodeVarint(1)
@@ -117,6 +122,7 @@ class TestAddresses(unittest.TestCase):
         diff_parameter = encodeVarint(1000)
         payload += diff_parameter + diff_parameter
         signature = highlevelcrypto.sign(payload, sample_privatesigningkey)
+        print('sig: %r' % hexlify(signature))
         payload += encodeVarint(len(signature)) + signature
 
         # Check
@@ -145,5 +151,8 @@ class TestAddresses(unittest.TestCase):
         self.assertTrue(
             highlevelcrypto.verify(
                 payload[:endOfSignedDataPosition],
-                signature, hexlify(pubsigningkey))
-        )
+                signature, hexlify(pubsigningkey)))
+        self.assertTrue(
+            highlevelcrypto.verify(
+                payload[:endOfSignedDataPosition],
+                sample_sig, hexlify(pubsigningkey)))
