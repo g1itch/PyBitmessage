@@ -88,9 +88,11 @@ function install_openssl(){
 	if [ "${MACHINE_TYPE}" == 'x86_64' ]; then
 		echo "Installing OpenSSL ${OPENSSL_VERSION} 64b"
 		wine Win64OpenSSL-${OPENSSL_VERSION}.exe  /q /norestart /silent /verysilent /sp- /suppressmsgboxes
+		export OPENSSL_DIR="$HOME/.wine64/drive_c/OpenSSL-Win64"
 	else
 		echo "Installing OpenSSL ${OPENSSL_VERSION} 32b"
 		wine Win32OpenSSL-${OPENSSL_VERSION}.exe  /q /norestart /silent /verysilent /sp- /suppressmsgboxes
+		export OPENSSL_DIR="$HOME/.wine64/drive_c/OpenSSL-Win32"
 	fi
 }
 
@@ -130,8 +132,8 @@ function install_pyopencl()
 
 function build_dll(){
 	cd "${BASE_DIR}" || exit 1
-	cd src/bitmsghash || exit 1
 	if [ "${MACHINE_TYPE}" == 'x86_64' ]; then
+	        cd src/bitmsghash || exit 1
 		echo "Create dll"
 		x86_64-w64-mingw32-g++ -D_WIN32 -Wall -O3 -march=native \
                     "-I$HOME/.wine64/drive_c/OpenSSL-Win64/include" \
@@ -146,18 +148,20 @@ function build_dll(){
                     -fPIC -shared -lcrypt32 -leay32 -lwsock32 \
                     -o bitmsghash64.dll -Wl,--out-implib,bitmsghash.a
 	else
-		echo "Create dll"
-		i686-w64-mingw32-g++ -D_WIN32 -Wall -m32 -O3 -march=native \
-                    "-I$HOME/.wine32/drive_c/OpenSSL-Win32/include" \
-                    -I/usr/i686-w64-mingw32/include \
-                    "-L$HOME/.wine32/drive_c/OpenSSL-Win32/lib" \
-                    -c bitmsghash.cpp
-		i686-w64-mingw32-g++ -static-libgcc -shared bitmsghash.o \
-                    -D_WIN32 -O3 -march=native \
-                    "-I$HOME/.wine32/drive_c/OpenSSL-Win32/include" \
-                    "-L$HOME/.wine32/drive_c/OpenSSL-Win32/lib/MinGW" \
-                    -fPIC -shared -lcrypt32 -leay32 -lwsock32 \
-                    -o bitmsghash32.dll -Wl,--out-implib,bitmsghash.a
+	    echo "Create pyd"
+	    # FIXME: check for VCPython and build dll if not found
+	    wine python setup.py build_ext --inplace
+		# i686-w64-mingw32-g++ -D_WIN32 -Wall -m32 -O3 -march=native \
+                #     "-I$HOME/.wine32/drive_c/OpenSSL-Win32/include" \
+                #     -I/usr/i686-w64-mingw32/include \
+                #     "-L$HOME/.wine32/drive_c/OpenSSL-Win32/lib" \
+                #     -c bitmsghash.cpp
+		# i686-w64-mingw32-g++ -static-libgcc -shared bitmsghash.o \
+                #     -D_WIN32 -O3 -march=native \
+                #     "-I$HOME/.wine32/drive_c/OpenSSL-Win32/include" \
+                #     "-L$HOME/.wine32/drive_c/OpenSSL-Win32/lib/MinGW" \
+                #     -fPIC -shared -lcrypt32 -leay32 -lwsock32 \
+                #     -o bitmsghash32.dll -Wl,--out-implib,bitmsghash.a
 	fi
 }
 
