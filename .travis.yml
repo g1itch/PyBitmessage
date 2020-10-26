@@ -28,5 +28,9 @@ install:
   - python setup.py install
 script:
   - python checkdeps.py
-  - xvfb-run src/bitmessagemain.py -t
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+    xvfb-run src/bitmessagemain.py -t;
+    else
+    python src/bitmessagemain.py -t;
+    fi
   - python setup.py test
