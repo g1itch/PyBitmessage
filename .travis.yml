@@ -31,6 +31,8 @@ script:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
     xvfb-run src/bitmessagemain.py -t;
     else
+    export BITMESSAGE_HOME=$(pwd)/$(echo -e "Pou\u017e\u00edvatel");
+    mkdir ${BITMESSAGE_HOME};
     python src/bitmessagemain.py -t;
     fi
   - python setup.py test
