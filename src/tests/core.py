@@ -57,6 +57,16 @@ def cleanup():
 class TestCore(unittest.TestCase):
     """Test case, which runs in main pybitmessage thread"""
 
+    def setUp(self):
+        """Check exceptions before starting"""
+        while True:
+            try:
+                thread, exc = excQueue.get(block=False)
+            except Queue.Empty:
+                return
+            if thread == 'tests':
+                self.fail('Exception in the main thread: %s' % exc)
+
     def test_msgcoding(self):
         """test encoding and decoding (originally from helper_msgcoding)"""
         msg_data = {
