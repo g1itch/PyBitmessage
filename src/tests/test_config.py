@@ -49,6 +49,13 @@ class TestProcessConfig(TestProcessProto):
         self._stop_process()
         self._kill_process()
         config = BMConfigParser()
+
+        self.longMessage = True
+
+        self.assertEqual(
+            config.safeGetInt('bitmessagesettings', 'settingsversion'), 0,
+            'BMConfigParser was probably loaded with some config')
+
         config.read(os.path.join(self.home, 'keys.dat'))
 
         self.assertEqual(config.safeGetInt(
