@@ -3,7 +3,6 @@ Various tests for config
 """
 
 import os
-import sys
 import unittest
 
 from pybitmessage.bmconfigparser import BMConfigParser
@@ -40,10 +39,6 @@ class TestConfig(unittest.TestCase):
             BMConfigParser().safeGetInt('nonexistent', 'nonexistent', 42), 42)
 
 
-@unittest.skipIf(
-    sys.platform[:5] != 'linux'
-    or os.getenv('TRAVIS_DIST') not in (None, 'xenial'),
-    'appdata confusion')
 class TestProcessConfig(TestProcessProto):
     """A test case for keys.dat"""
 

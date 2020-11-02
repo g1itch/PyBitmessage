@@ -127,7 +127,7 @@ class TestProcessShutdown(TestProcessProto):
 
 class TestProcess(TestProcessProto):
     """A test case for pybitmessage process"""
-    @unittest.skipIf(sys.platform[:5] != 'linux', 'brobably needs prctl')
+    @unittest.skipIf(sys.platform[:5] != 'linux', 'probably needs prctl')
     def test_process_name(self):
         """Check PyBitmessage process name"""
         self.assertEqual(self.process.name(), 'PyBitmessage')
@@ -142,7 +142,6 @@ class TestProcess(TestProcessProto):
                 'Failed to read file %s' % pfile
             )
 
-    @unittest.skipIf(sys.platform[:5] != 'linux', 'prctl is only for linux')
     def test_threads(self):
         """Testing PyBitmessage threads"""
         self._test_threads()
