@@ -12,6 +12,8 @@ from pybitmessage.pyelliptic.openssl import OpenSSL
 # pylint: disable=protected-access
 
 
+@unittest.skipIf(
+    OpenSSL._version.startswith('OpenSSL 1.0.2'), "Found unsupported OpenSSL 1.0.2")
 class TestBlindSig(unittest.TestCase):
     """
     Test case for ECC blind signature
