@@ -7,6 +7,8 @@ import json
 import time
 import xmlrpclib  # nosec
 
+import psutil
+
 from test_process import TestProcessProto, TestProcessShutdown
 
 
@@ -32,11 +34,9 @@ class TestAPIShutdown(TestAPIProto, TestProcessShutdown):
     def test_shutdown(self):
         """Shutdown the pybitmessage"""
         self.assertEqual(self.api.shutdown(), 'done')
-        for _ in range(5):
-            if not self.process.is_running():
-                break
-            time.sleep(2)
-        else:
+        try:
+            self.process.wait(20)
+        except psutil.TimeoutExpired:
             self.fail(
                 '%s has not stopped in 10 sec' % ' '.join(self._process_cmd))
 
