@@ -17,6 +17,7 @@ except ImportError:
 import state
 from singleton import Singleton
 
+
 BMConfigDefaults = {
     "bitmessagesettings": {
         "maxaddrperstreamsend": 500,
@@ -48,10 +49,9 @@ BMConfigDefaults = {
 }
 
 
-@Singleton
-class BMConfigParser(SafeConfigParser):
+class Parser(SafeConfigParser):
     """
-    Singleton class inherited from :class:`ConfigParser.SafeConfigParser`
+    An ancestor of :class:`SafeConfigParser`
     with additional methods specific to bitmessage config.
     """
     # pylint: disable=too-many-ancestors
@@ -194,3 +194,9 @@ class BMConfigParser(SafeConfigParser):
         if value < 0 or value > 8:
             return False
         return True
+
+
+@Singleton
+class BMConfigParser(Parser):
+    """Singleton class inherited from :class:`Parser`"""
+    pass
