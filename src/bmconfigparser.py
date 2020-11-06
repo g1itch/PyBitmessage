@@ -14,6 +14,8 @@ except ImportError:
         ConfigParser, InterpolationError, NoOptionError, NoSectionError)
     SafeConfigParser = ConfigParser
 
+from six import string_types
+
 import state
 from singleton import Singleton
 
@@ -60,7 +62,7 @@ class Parser(SafeConfigParser):
 
     def set(self, section, option, value=None):
         if self._optcre is self.OPTCRE or value:
-            if not isinstance(value, basestring):
+            if not isinstance(value, string_types):
                 raise TypeError("option values must be strings")
         if not self.validate(section, option, value):
             raise ValueError("Invalid value %s" % value)
