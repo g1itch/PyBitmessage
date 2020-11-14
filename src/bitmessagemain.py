@@ -237,8 +237,6 @@ class Main(object):
             defaults.networkDefaultPayloadLengthExtraBytes = int(
                 defaults.networkDefaultPayloadLengthExtraBytes / 100)
 
-        readKnownNodes()
-
         # Not needed if objproc is disabled
         if state.enableObjProc:
 
@@ -311,6 +309,7 @@ class Main(object):
 
         # start network components if networking is enabled
         if state.enableNetwork:
+            readKnownNodes()
             start_proxyconfig()
             BMConnectionPool().connectToStream(1)
             asyncoreThread = BMNetworkThread()
