@@ -5,24 +5,19 @@ import sys
 import time
 
 
-if ctypes.sizeof(ctypes.c_voidp) == 4:
-  arch = 32
-else:
-  arch = 64
-
-sslName = 'OpenSSL-Win%i' % arch
 site_root = os.path.abspath(HOMEPATH)
 spec_root = os.path.abspath(SPECPATH)
+arch = 32 if ctypes.sizeof(ctypes.c_voidp) == 4 else 64
 cdrivePath = site_root[0:3]
 srcPath = os.path.join(spec_root[:-20], "src")
-qtBase = "PyQt4"
+sslName = 'OpenSSL-Win%i' % arch
 openSSLPath = os.path.join(cdrivePath, sslName)
 msvcrDllPath = os.path.join(cdrivePath, "windows", "system32")
 outPath = os.path.join(spec_root, "bitmessagemain")
+qtBase = "PyQt4"
 
-importPath = srcPath 
-sys.path.insert(0, importPath)
-os.chdir(importPath)
+sys.path.insert(0, srcPath)
+os.chdir(srcPath)
 
 snapshot = False
 
@@ -107,10 +102,10 @@ from version import softwareVersion
 
 today = time.strftime("%Y%m%d")
 
-fname = 'Bitmessage_%s_%s.exe' % (
-    "x86" if arch == 32 else "x64",
-    today if snapshot else softwareVersion
-)
+fname = '%s_%%s_%s.exe' % (
+    ('Bitmessagedev', today) if snapshot else ('Bitmessage', softwareVersion)
+) % ("x86" if arch == 32 else "x64")
+
 
 pyz = PYZ(a.pure)
 exe = EXE(
