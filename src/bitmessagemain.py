@@ -39,11 +39,7 @@ from helper_startup import (
     adjustHalfOpenConnectionsLimit, fixSocket, start_proxyconfig)
 from inventory import Inventory
 # Network objects and threads
-from network import (
-    BMConnectionPool, Dandelion, AddrThread, AnnounceThread, BMNetworkThread,
-    InvThread, ReceiveQueueThread, DownloadThread, UploadThread
-)
-from network.knownnodes import readKnownNodes
+import network
 from singleinstance import singleinstance
 # Synchronous threads
 from threads import (
@@ -174,8 +170,6 @@ class Main(object):
             defaults.networkDefaultPayloadLengthExtraBytes = int(
                 defaults.networkDefaultPayloadLengthExtraBytes / 100)
 
-        readKnownNodes()
-
         # Not needed if objproc is disabled
         if state.enableObjProc:
 
@@ -199,8 +193,6 @@ class Main(object):
         sqlLookup.start()
 
         Inventory()  # init
-        # init, needs to be early because other thread may access it early
-        Dandelion()
 
         # Enable object processor and SMTP only if objproc enabled
         if state.enableObjProc:
@@ -249,30 +241,17 @@ class Main(object):
         # start network components if networking is enabled
         if state.enableNetwork:
             start_proxyconfig()
-            BMConnectionPool().connectToStream(1)
-            asyncoreThread = BMNetworkThread()
-            asyncoreThread.daemon = True
-            asyncoreThread.start()
             for i in range(config.getint('threads', 'receive')):
-                receiveQueueThread = ReceiveQueueThread(i)
+                receiveQueueThread = network.ReceiveQueueThread(i)
                 receiveQueueThread.daemon = True
                 receiveQueueThread.start()
+
+            network.start()
+
             if config.safeGetBoolean('bitmessagesettings', 'udp'):
-                state.announceThread = AnnounceThread()
+                state.announceThread = network.AnnounceThread()
                 state.announceThread.daemon = True
                 state.announceThread.start()
-            state.invThread = InvThread()
-            state.invThread.daemon = True
-            state.invThread.start()
-            state.addrThread = AddrThread()
-            state.addrThread.daemon = True
-            state.addrThread.start()
-            state.downloadThread = DownloadThread()
-            state.downloadThread.daemon = True
-            state.downloadThread.start()
-            state.uploadThread = UploadThread()
-            state.uploadThread.daemon = True
-            state.uploadThread.start()
 
             if config.safeGetBoolean('bitmessagesettings', 'upnp'):
                 import upnp
