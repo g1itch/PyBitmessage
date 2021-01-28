@@ -1,19 +1,87 @@
 language: python
+cache: pip
+dist: bionic
 python:
   - "2.7"
+  - "3.6"
+services:
+  - docker
 addons:
   apt:
     packages:
       - build-essential
+      - dante-server
       - libcap-dev
       - python-pyqt5
       - tor
       - xvfb
+jobs:
+  allow_failures:
+    - python: "3.6"
+    - os: windows
+  include:
+    - dist: xenial
+    - dist: bionic
+      if: type = pull_request
+      language: generic
+      install:
+        - docker build -t bm_fedora -f packages/Dockerfile.fedora .
+      script:
+        - docker run bm_fedora
+    - os: osx
+      if: tag IS present
+      language: generic
+      before_install:
+        - brew install tor
+        - brew services start tor
+    - os: windows
+      language: shell
+      before_install:
+        - choco install python2 tor
+        - choco install --ignore-dependencies vcpython27
+        - python -m pip install --upgrade pip
+        - wget -c -nc -nv --content-disposition https://github.com/Bitmessage/ThirdPartyLibraries/blob/master/Win64OpenSSL-1_0_2t.exe?raw=true
+        - powershell -Command "Start-Process -FilePath Win64OpenSSL-1_0_2t.exe -ArgumentList '/q /norestart /silent /verysilent /sp- /suppressmsgboxes /dir=C:\OpenSSL-Win64' -Wait"
+        - python setup.py build_ext --inplace
+      env:
+        - PATH=/c/Python27:/c/Python27/Scripts:$PATH
+        - OPENSSL_DIR="c:\\OpenSSL-Win64"
+    - stage: deploy
+      python: 2.7_with_system_site_packages
+      script: skip
+      deploy:
+        provider: releases
+        token:
+          secure: YOUR_API_KEY_ENCRYPTED
+        file:
+          - dist/pybitmessage-${VERSION}.tar.gz
+          - dist/pybitmessage_${VERSION}-1_amd64.deb
+          - dist/Bitmessage_x86_${VERSION}.exe
+          - dist/Bitmessage_x64_${VERSION}.exe
+        cleanup: false
+        draft: true
+        on:
+          tags: true
 install:
   - pip install -r requirements.txt
-  - ln -s src pybitmessage  # tests environment
   - python setup.py install
 script:
   - python checkdeps.py
-  - xvfb-run src/bitmessagemain.py -t
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+    xvfb-run src/bitmessagemain.py -t;
+    else
+    python src/bitmessagemain.py -t;
+    fi
   - python setup.py test
+before_deploy:
+  - sudo apt-get install -yq python-stdeb fakeroot python-all-dev dh-python debhelper libssl-dev wine-stable winetricks wine32 wine64 mingw-w64 xvfb
+  - python setup.py sdist
+  - export VERSION=$(python setup.py --version)
+  - python setup.py --command-packages=stdeb.command bdist_deb
+  - mv deb_dist/pybitmessage_${VERSION}-1_amd64.deb dist/
+  - export WINDIST=$HOME/build/$TRAVIS_REPO_SLUG/packages/pyinstaller/dist/
+  - xvfb-run buildscripts/winbuild.sh
+  - mv ${WINDIST}/Bitmessage_x64_${VERSION}.exe dist/
+  - xvfb-run i386 buildscripts/winbuild.sh
+  - mv ${WINDIST}/Bitmessage_x86_${VERSION}.exe dist/
+  - ls -hal dist

@@ -3,6 +3,7 @@ Common reusable code for tests and tests for pybitmessage process.
 """
 
 import os
+import sys
 import signal
 import subprocess  # nosec
 import sys
@@ -18,7 +19,7 @@ from common import cleanup
 def put_signal_file(path, filename):
     """Creates file, presence of which is a signal about some event."""
     with open(os.path.join(path, filename), 'wb') as outfile:
-        outfile.write(str(time.time()))
+        outfile.write(b'%i' % time.time())
 
 
 class TestProcessProto(unittest.TestCase):
@@ -194,6 +195,7 @@ class TestProcessShutdown(TestProcessProto):
 
 class TestProcess(TestProcessProto):
     """A test case for pybitmessage process"""
+    @unittest.skipIf(sys.platform[:5] != 'linux', 'probably needs prctl')
     def test_process_name(self):
         """Check PyBitmessage process name"""
         self.assertEqual(self.process.name(), 'PyBitmessage')

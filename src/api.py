@@ -265,7 +265,7 @@ class singleAPI(StoppableThread):
         if apiNotifyPath:
             logger.info('Trying to call %s', apiNotifyPath)
             try:
-                subprocess.call([apiNotifyPath, "startingUp"])
+                subprocess.Popen([apiNotifyPath, "startingUp"])
             except OSError:
                 logger.warning(
                     'Failed to call %s, removing apinotifypath setting',
