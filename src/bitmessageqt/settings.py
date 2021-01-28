@@ -20,7 +20,7 @@ import widgets
 from bmconfigparser import BMConfigParser
 from helper_sql import sqlExecute, sqlStoredProcedure
 from helper_startup import start_proxyconfig
-from network import knownnodes
+from network import knownnodes, AnnounceThread
 from network.asyncore_pollchoose import set_rates
 from tr import _translate
 
@@ -139,6 +139,8 @@ class SettingsDialog(QtWidgets.QDialog):
             config.get('bitmessagesettings', 'port')))
         self.checkBoxUPnP.setChecked(
             config.safeGetBoolean('bitmessagesettings', 'upnp'))
+        self.checkBoxUDP.setChecked(
+            config.safeGetBoolean('bitmessagesettings', 'udp'))
         self.checkBoxAuthentication.setChecked(
             config.getboolean('bitmessagesettings', 'socksauthentication'))
         self.checkBoxSocksListen.setChecked(
@@ -327,7 +329,8 @@ class SettingsDialog(QtWidgets.QDialog):
                 self.lineEditTCPPort.text()):
             self.config.set(
                 'bitmessagesettings', 'port', str(self.lineEditTCPPort.text()))
-            if not self.config.safeGetBoolean('bitmessagesettings', 'dontconnect'):
+            if not self.config.safeGetBoolean(
+                    'bitmessagesettings', 'dontconnect'):
                 self.net_restart_needed = True
 
         if self.checkBoxUPnP.isChecked() != self.config.safeGetBoolean(
@@ -340,11 +343,26 @@ class SettingsDialog(QtWidgets.QDialog):
                 upnpThread = upnp.uPnPThread()
                 upnpThread.start()
 
+        udp_enabled = self.checkBoxUDP.isChecked()
+        if udp_enabled != self.config.safeGetBoolean(
+                'bitmessagesettings', 'udp'):
+            self.config.set('bitmessagesettings', 'udp', str(udp_enabled))
+            if udp_enabled:
+                announceThread = AnnounceThread()
+                announceThread.daemon = True
+                announceThread.start()
+            else:
+                try:
+                    state.announceThread.stopThread()
+                except AttributeError:
+                    pass
+
         proxytype_index = self.comboBoxProxyType.currentIndex()
         if proxytype_index == 0:
             if self._proxy_type and state.statusIconColor != 'red':
                 self.net_restart_needed = True
-        elif state.statusIconColor == 'red' and self.config.safeGetBoolean('bitmessagesettings', 'dontconnect'):
+        elif state.statusIconColor == 'red' and self.config.safeGetBoolean(
+                'bitmessagesettings', 'dontconnect'):
             self.net_restart_needed = False
         elif self.comboBoxProxyType.currentText() != self._proxy_type:
             self.net_restart_needed = True
@@ -370,8 +388,11 @@ class SettingsDialog(QtWidgets.QDialog):
             self.lineEditSocksPassword.text()))
         self.config.set('bitmessagesettings', 'sockslisten', str(
             self.checkBoxSocksListen.isChecked()))
-        if self.checkBoxOnionOnly.isChecked() \
-                and not self.config.safeGetBoolean('bitmessagesettings', 'onionservicesonly'):
+        if (
+            self.checkBoxOnionOnly.isChecked()
+            and not self.config.safeGetBoolean(
+                'bitmessagesettings', 'onionservicesonly')
+        ):
             self.net_restart_needed = True
         self.config.set('bitmessagesettings', 'onionservicesonly', str(
             self.checkBoxOnionOnly.isChecked()))
