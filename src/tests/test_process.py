@@ -12,7 +12,10 @@ import unittest
 
 import psutil
 
-from common import cleanup
+from .common import cleanup, skip_python3
+
+
+skip_python3()
 
 
 def put_signal_file(path, filename):

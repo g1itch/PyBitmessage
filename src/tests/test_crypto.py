@@ -6,8 +6,12 @@ import hashlib
 import unittest
 from abc import ABCMeta, abstractmethod
 from binascii import hexlify, unhexlify
-from pybitmessage.pyelliptic import arithmetic
 
+from .common import skip_python3
+
+skip_python3()  # noqa:E402
+
+from pybitmessage.pyelliptic import arithmetic
 try:
     from Crypto.Hash import RIPEMD
 except ImportError:

@@ -1,4 +1,6 @@
 import os
+import sys
+import unittest
 
 
 _files = (
@@ -17,3 +19,9 @@ def cleanup(home=None, files=_files):
             os.remove(os.path.join(home, pfile))
         except OSError:
             pass
+
+
+def skip_python3():
+    """Raise unittest.SkipTest() if detected python3"""
+    if sys.hexversion >= 0x3000000:
+        raise unittest.SkipTest('Module is not ported to python3')

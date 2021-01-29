@@ -4,6 +4,7 @@ import os
 import platform
 import shutil
 import sys
+import unittest
 
 from setuptools import setup, Extension
 from setuptools.command.install import install
@@ -42,6 +43,11 @@ class InstallCmd(install):
             'desktop/icon24.png', 'desktop/icons/24x24/pybitmessage.png')
 
         return install.run(self)
+
+
+def unittest_discover():
+    """Explicit test suite creation"""
+    return unittest.TestLoader().discover('pybitmessage.tests')
 
 
 if __name__ == "__main__":
@@ -115,6 +121,7 @@ if __name__ == "__main__":
         #keywords='',
         install_requires=installRequires,
         tests_require=requirements,
+        test_suite='setup.unittest_discover',
         extras_require=EXTRAS_REQUIRE,
         classifiers=[
             "License :: OSI Approved :: MIT License"

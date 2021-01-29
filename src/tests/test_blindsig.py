@@ -5,6 +5,10 @@ import os
 import unittest
 from hashlib import sha256
 
+from .common import skip_python3
+
+skip_python3()  # noqa:E402
+
 from pybitmessage.pyelliptic.eccblind import ECCBlind
 from pybitmessage.pyelliptic.eccblindchain import ECCBlindChain
 from pybitmessage.pyelliptic.openssl import OpenSSL

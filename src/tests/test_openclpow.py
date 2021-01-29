@@ -3,12 +3,11 @@ Tests for openclpow module
 """
 import hashlib
 import unittest
-
-import pybitmessage.openclpow as openclpow
-
 from struct import pack, unpack
 
-from test_process import TestProcessProto
+from .test_process import TestProcessProto
+
+import pybitmessage.openclpow as openclpow
 
 
 class TestOpenClPow(TestProcessProto):

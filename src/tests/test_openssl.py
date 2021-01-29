@@ -3,6 +3,10 @@ Test if OpenSSL is working correctly
 """
 import unittest
 
+from .common import skip_python3
+
+skip_python3()  # noqa:E402
+
 from pybitmessage.pyelliptic.openssl import OpenSSL
 
 try:
