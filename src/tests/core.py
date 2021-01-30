@@ -372,6 +372,7 @@ def run():
     except ImportError:
         pass
     else:
+        state.enableGUI = True
         qt_tests = loader.loadTestsFromModule(bitmessageqt.tests)
         suite.addTests(qt_tests)
 

@@ -370,7 +370,6 @@ class Main(object):
                 ):
                     self.stop()
         elif not state.enableGUI:
-            state.enableGUI = True
             try:
                 # pylint: disable=relative-import
                 from tests import core as test_core
