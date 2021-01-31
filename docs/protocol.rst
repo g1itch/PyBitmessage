@@ -1,6 +1,9 @@
 Protocol specification
 ======================
 
+.. warning:: All objects sent on the network should support protocol v3
+	     starting on Sun, 16 Nov 2014 22:00:00 GMT.
+
 .. toctree::
    :maxdepth: 2
 
