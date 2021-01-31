@@ -1,0 +1,4 @@
+import pathmagick
+
+
+pathmagick.setup()

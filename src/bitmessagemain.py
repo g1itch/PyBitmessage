@@ -12,10 +12,8 @@ The PyBitmessage startup script
 import os
 import sys
 
-app_dir = os.path.dirname(os.path.abspath(__file__))
-os.chdir(app_dir)
-sys.path.insert(0, app_dir)
-
+import pathmagick
+pathmagick.setup()
 
 import depends
 depends.check_dependencies()
