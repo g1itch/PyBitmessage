@@ -269,6 +269,7 @@ Pubkey bitfield features
      - (**Proposal**) Receiving node expects that the RIPE hash encoded in their
        address preceedes the encrypted message data of msg messages bound for
        them.
+
        .. note:: since hardly anyone implements this, this will be redesigned as
 		 `simple recipient verification <https://github.com/Bitmessage/PyBitmessage/pull/808#issuecomment-170189856>`_
    * - 31
