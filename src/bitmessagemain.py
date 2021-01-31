@@ -207,8 +207,8 @@ class Main(object):
                 ' or by searching Google for \'PyQt Download\'.'
                 ' If you want to run in daemon mode, see '
                 'https://bitmessage.org/wiki/Daemon\n'
-                'You can also run PyBitmessage with'
-                ' the new curses interface by providing'
+                'You can also try running PyBitmessage with'
+                ' unmaintained curses interface by providing'
                 ' \'-c\' as a commandline argument.'
             )
         # is the application already running?  If yes then exit.
