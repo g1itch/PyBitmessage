@@ -1,11 +1,17 @@
 .. mdinclude:: ../README.md
    :end-line: 20
 
-:doc:`protocol`
+Protocol documentation
+----------------------
+.. toctree::
+   :maxdepth: 2
 
+   protocol
+   encryption
+   pow
 
-Documentation
--------------
+Code documentation
+------------------
 .. toctree::
    :maxdepth: 3
 
