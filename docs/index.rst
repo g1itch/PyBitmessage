@@ -1,4 +1,8 @@
 .. mdinclude:: ../README.md
+   :end-line: 20
+
+:doc:`protocol`
+
 
 Documentation
 -------------
@@ -21,3 +25,6 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
+
+.. mdinclude:: ../README.md
+   :start-line: 21
