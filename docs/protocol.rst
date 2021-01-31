@@ -226,7 +226,7 @@ Message Encodings
 	  messageToTransmit = 'Subject:' + subject + '\n' + 'Body:' + message
    * - 3
      - EXTENDED
-     - See :ref:`extended_encoding`
+     - See :doc:`extended_encoding`
 
 Further values for the message encodings can be decided upon by the community.
 Any MIME or MIME-like encoding format, should they be used, should make use of

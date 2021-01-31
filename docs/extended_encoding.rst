@@ -1,5 +1,3 @@
-.. _extended_encoding:
-
 Extended encoding
 =================
 
