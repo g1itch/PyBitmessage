@@ -66,7 +66,8 @@ Partial Example
    * - Data
      - Comments
    * -
-       ::
+       .. code-block::
+
           04 09 d4 e5  c0 ab 3d 25
           fe 04 8c 64  c9 da 1a 24
           2c 7f 19 41  7e 95 17 cd
